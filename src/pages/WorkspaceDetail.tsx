@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/table";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
