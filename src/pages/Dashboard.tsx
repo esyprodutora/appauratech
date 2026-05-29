@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { ensureOrganization } from "@/lib/org";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, MousePointerClick, Eye, Briefcase, Inbox } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { MetricCard } from "@/components/metric-card";
 import { ScoreBadge } from "@/components/score-badge";
 import {
@@ -61,7 +62,7 @@ function buildChart(
 interface Metric {
   label: string;
   value: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   accent?: "default" | "success";
 }
 
