@@ -13,13 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Video, ShoppingCart, ClipboardList, MapPin } from "lucide-react";
 
-type TemplateId = "vsl" | "ecommerce" | "leads" | "local";
+type TemplateId = "vsl" | "ecommerce" | "lead_quiz" | "local_x1";
 
 const TEMPLATES: Array<{ id: TemplateId; title: string; subtitle: string; icon: React.ReactNode }> = [
   { id: "vsl", title: "VSL / Infoproduto", subtitle: "Páginas de venda longas", icon: <Video size={20} /> },
   { id: "ecommerce", title: "E-commerce", subtitle: "Loja virtual", icon: <ShoppingCart size={20} /> },
-  { id: "leads", title: "Captura de Leads / Quiz", subtitle: "Funis de leads", icon: <ClipboardList size={20} /> },
-  { id: "local", title: "Negócio Local / WhatsApp", subtitle: "Conversão por mensagem", icon: <MapPin size={20} /> },
+  { id: "lead_quiz", title: "Captura de Leads / Quiz", subtitle: "Funis de leads", icon: <ClipboardList size={20} /> },
+  { id: "local_x1", title: "Negócio Local / WhatsApp", subtitle: "Conversão por mensagem", icon: <MapPin size={20} /> },
 ];
 
 function scoreLabel(s: number) {
