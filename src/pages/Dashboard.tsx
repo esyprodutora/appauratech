@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import DateFilter, { DateRange, computeRange } from "@/components/DateFilter";
 
 interface Metric {
   label: string;
@@ -28,8 +29,12 @@ interface Metric {
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [workspacesCount, setWorkspacesCount] = useState(0);
+  const [range, setRange] = useState<DateRange>(() => computeRange("7d"));
+  const [sessionsCount, setSessionsCount] = useState(0);
+  const [avgScore, setAvgScore] = useState(0);
   const [eventsCount, setEventsCount] = useState(0);
+  const [highScoreCount, setHighScoreCount] = useState(0);
+  const [sessions, setSessions] = useState<Array<{ created_at: string; score: number | null }>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,7 +44,8 @@ export default function Dashboard() {
       return;
     }
     fetchMetrics();
-  }, [user, authLoading, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, navigate, range.from.getTime(), range.to.getTime()]);
 
   async function fetchMetrics() {
     setLoading(true);
@@ -51,18 +57,48 @@ export default function Dashboard() {
         .select("id")
         .eq("org_id", org.id);
       const workspaceIds = (wsRows ?? []).map((w) => w.id as string);
-      setWorkspacesCount(workspaceIds.length);
 
       if (workspaceIds.length === 0) {
+        setSessionsCount(0);
+        setAvgScore(0);
         setEventsCount(0);
+        setHighScoreCount(0);
+        setSessions([]);
         return;
       }
 
-      const { count } = await supabase
-        .from("capi_events_log")
-        .select("id", { count: "exact", head: true })
-        .in("workspace_id", workspaceIds);
-      setEventsCount(count ?? 0);
+      const fromIso = range.from.toISOString();
+      const toIso = range.to.toISOString();
+
+      const [sessRes, evRes, highRes] = await Promise.all([
+        supabase
+          .from("active_sessions")
+          .select("created_at, score")
+          .in("workspace_id", workspaceIds)
+          .gte("created_at", fromIso)
+          .lte("created_at", toIso),
+        supabase
+          .from("capi_events_log")
+          .select("id", { count: "exact", head: true })
+          .in("workspace_id", workspaceIds)
+          .gte("sent_at", fromIso)
+          .lte("sent_at", toIso),
+        supabase
+          .from("active_sessions")
+          .select("id", { count: "exact", head: true })
+          .in("workspace_id", workspaceIds)
+          .gte("created_at", fromIso)
+          .lte("created_at", toIso)
+          .gte("score", 85),
+      ]);
+
+      const sessRows = (sessRes.data ?? []) as Array<{ created_at: string; score: number | null }>;
+      setSessions(sessRows);
+      setSessionsCount(sessRows.length);
+      const scored = sessRows.filter((s) => typeof s.score === "number");
+      setAvgScore(scored.length ? scored.reduce((a, b) => a + (b.score ?? 0), 0) / scored.length : 0);
+      setEventsCount(evRes.count ?? 0);
+      setHighScoreCount(highRes.count ?? 0);
     } finally {
       setLoading(false);
     }
@@ -84,14 +120,14 @@ export default function Dashboard() {
 
   const metrics: Metric[] = [
     {
-      label: "SESSÕES QUALIFICADAS HOJE",
-      value: workspacesCount.toLocaleString("pt-BR"),
+      label: "SESSÕES QUALIFICADAS",
+      value: sessionsCount.toLocaleString("pt-BR"),
       change: "+0%",
       icon: Briefcase,
     },
     {
       label: "SCORE MÉDIO DAS SESSÕES",
-      value: "0.0",
+      value: avgScore.toFixed(1),
       change: "+0%",
       icon: MousePointerClick,
     },
@@ -103,21 +139,14 @@ export default function Dashboard() {
     },
     {
       label: "SCORE ≥ 85 (ALTA INTENÇÃO)",
-      value: "0",
+      value: highScoreCount.toLocaleString("pt-BR"),
       change: "+0%",
       icon: Eye,
       valueColor: "#10b981",
     },
   ];
 
-  const chartData = Array.from({ length: 7 }).map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return {
-      date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-      value: 0,
-    };
-  });
+  const chartData = useMemo(() => buildChart(sessions, range), [sessions, range]);
 
   return (
     <Layout>
@@ -130,6 +159,10 @@ export default function Dashboard() {
           <ArrowUpRight className="mr-2 h-4 w-4" />
           Novo Workspace
         </Button>
+      </div>
+
+      <div className="mt-4">
+        <DateFilter value={range} onChange={setRange} />
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
