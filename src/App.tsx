@@ -18,12 +18,15 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/workspaces" element={<Workspaces />} />
         <Route path="/workspaces/new" element={<CreateWorkspace />} />
         <Route path="/workspaces/:id" element={<WorkspaceDetail />} />
         <Route path="/install" element={<InstallScript />} />
         <Route path="/plans" element={<Plans />} />
+        <Route path="/plano" element={<Plans />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/configuracoes" element={<Settings />} />
       </Routes>
       <Toaster position="top-right" richColors />
     </AuthProvider>
