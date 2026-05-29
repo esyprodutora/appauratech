@@ -32,7 +32,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="flex w-64 flex-col border-r bg-sidebar">
+      <aside
+        className="flex w-64 flex-col"
+        style={{
+          background: "#0A0A0B",
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+        }}
+      >
         <div className="p-4">
           <Link to="/" className="flex items-center">
             <span className="aura-logo" style={{ fontSize: "24px" }}>
@@ -50,12 +56,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                    )}
+                    className="aura-nav-item"
+                    data-active={isActive}
                   >
                     <Icon className="h-4 w-4" />
                     {item.label}
@@ -67,19 +69,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </ul>
         </nav>
 
-        <div className="border-t p-3">
+        <div className="p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
           <div className="mb-2 flex items-center gap-2 px-3 py-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
+              style={{ background: "linear-gradient(135deg,#6366F1,#A855F7)" }}
+            >
               {user?.email?.charAt(0).toUpperCase() ?? "U"}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-sidebar-foreground">{user?.email}</p>
+              <p className="truncate text-sm font-medium" style={{ color: "#F8FAFC" }}>
+                {user?.email}
+              </p>
             </div>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent"
+            className="w-full justify-start"
+            style={{ color: "#94A3B8" }}
             onClick={handleLogout}
           >
             <LogOut className="mr-2 h-4 w-4" />
@@ -88,7 +96,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 bg-background">
+      <main className="flex-1" style={{ background: "#0A0A0B" }}>
         <div className="p-6">{children}</div>
       </main>
     </div>
