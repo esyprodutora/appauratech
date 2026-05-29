@@ -1,33 +1,17 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Home,
-  Radio,
-  Code,
-  CreditCard,
-  Settings,
-  LogOut,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Home, Radio, Code, CreditCard, Settings, LogOut } from "lucide-react";
 import AuraLogo from "@/components/AuraLogo";
 
-const navSections = [
-  {
-    label: "Workspace",
-    items: [
-      { label: "Visão Geral", path: "/", icon: Home },
-      { label: "Workspaces", path: "/workspaces", icon: Radio },
-      { label: "Instalação", path: "/install", icon: Code },
-    ],
-  },
-  {
-    label: "Conta",
-    items: [
-      { label: "Planos", path: "/plans", icon: CreditCard },
-      { label: "Configurações", path: "/settings", icon: Settings },
-    ],
-  },
+const NAV = [
+  { label: "Visão Geral", path: "/", icon: Home },
+  { label: "Workspaces", path: "/workspaces", icon: Radio },
+  { label: "Instalação", path: "/install", icon: Code },
+  { label: "Planos", path: "/plans", icon: CreditCard },
+  { label: "Configurações", path: "/settings", icon: Settings },
 ];
+
+const SIDEBAR_BORDER = "1px solid rgba(255,255,255,0.08)";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
@@ -39,99 +23,146 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     navigate("/login");
   };
 
+  const isActive = (path: string) =>
+    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+
   return (
-    <div className="flex min-h-screen">
+    <div style={{ minHeight: "100vh", background: "#0A0A0B" }}>
       <aside
-        className="flex w-60 flex-col"
         style={{
-          background: "var(--sidebar)",
-          borderRight: "1px solid var(--sidebar-border)",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: 240,
+          background: "#0f0f0f",
+          borderRight: SIDEBAR_BORDER,
+          display: "flex",
+          flexDirection: "column",
+          zIndex: 30,
         }}
       >
-        <div className="px-4 pb-3 pt-5">
-          <Link to="/" className="flex items-center gap-2">
+        <div style={{ padding: 24 }}>
+          <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <AuraLogo size={24} fontSize={22} />
           </Link>
         </div>
 
-        <nav className="flex-1 px-2.5 pb-3">
-          {navSections.map((section, idx) => (
-            <div key={section.label}>
-              <p
-                className="aura-nav-section"
-                style={idx === 0 ? { marginTop: "0.5rem" } : undefined}
-              >
-                {section.label}
-              </p>
-              <ul className="space-y-0.5">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive =
-                    item.path === "/"
-                      ? location.pathname === "/"
-                      : location.pathname.startsWith(item.path);
-                  return (
-                    <li key={item.path}>
-                      <Link
-                        to={item.path}
-                        className="aura-nav-item"
-                        data-active={isActive}
-                      >
-                        <Icon className="h-[15px] w-[15px]" />
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
+        <nav style={{ flex: 1, padding: "8px 12px", overflowY: "auto" }}>
+          <ul style={{ display: "flex", flexDirection: "column", gap: 2, listStyle: "none", margin: 0, padding: 0 }}>
+            {NAV.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              return (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 16px",
+                      borderRadius: 8,
+                      fontSize: 13.5,
+                      fontWeight: 500,
+                      color: active ? "#FFFFFF" : "#94A3B8",
+                      background: active ? "#1a1040" : "transparent",
+                      borderLeft: active ? "3px solid #6366F1" : "3px solid transparent",
+                      textDecoration: "none",
+                      transition: "background 150ms ease, color 150ms ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) {
+                        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+                        (e.currentTarget as HTMLElement).style.color = "#F8FAFC";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) {
+                        (e.currentTarget as HTMLElement).style.background = "transparent";
+                        (e.currentTarget as HTMLElement).style.color = "#94A3B8";
+                      }
+                    }}
+                  >
+                    <Icon size={16} strokeWidth={2} />
+                    <span>{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
 
-        <div
-          className="p-2.5"
-          style={{ borderTop: "1px solid var(--sidebar-border)" }}
-        >
-          <div
-            className="mb-1 flex items-center gap-2.5 rounded-md px-2 py-2"
-            style={{ background: "transparent" }}
-          >
+        <div style={{ padding: 12, borderTop: SIDEBAR_BORDER }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px" }}>
             <div
-              className="flex h-7 w-7 items-center justify-center rounded-md text-[11px] font-semibold text-white"
-              style={{ background: "var(--gradient-primary)" }}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #6366F1, #A855F7)",
+                color: "#fff",
+                fontSize: 12,
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
             >
               {user?.email?.charAt(0).toUpperCase() ?? "U"}
             </div>
-            <div className="min-w-0 flex-1">
-              <p
-                className="truncate text-[12.5px] font-medium leading-tight"
-                style={{ color: "var(--foreground)" }}
-              >
-                {user?.email}
-              </p>
-              <p
-                className="truncate text-[11px] leading-tight"
-                style={{ color: "var(--subtle-foreground)" }}
-              >
-                Plano Starter
-              </p>
-            </div>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12.5,
+                color: "#F8FAFC",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                flex: 1,
+              }}
+              title={user?.email}
+            >
+              {user?.email}
+            </p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-[13px] font-medium hover:bg-white/5 hover:text-foreground"
-            style={{ color: "var(--subtle-foreground)" }}
+          <button
+            type="button"
             onClick={handleLogout}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 12px",
+              marginTop: 4,
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#94A3B8",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              transition: "background 150ms ease, color 150ms ease",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)";
+              (e.currentTarget as HTMLElement).style.color = "#F8FAFC";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+              (e.currentTarget as HTMLElement).style.color = "#94A3B8";
+            }}
           >
-            <LogOut className="mr-2 h-[15px] w-[15px]" />
+            <LogOut size={15} />
             Sair
-          </Button>
+          </button>
         </div>
       </aside>
 
-      <main className="flex-1" style={{ background: "var(--background)" }}>
-        <div className="mx-auto max-w-[1200px] px-8 py-8">{children}</div>
+      <main style={{ marginLeft: 240, minHeight: "100vh" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px" }}>{children}</div>
       </main>
     </div>
   );
