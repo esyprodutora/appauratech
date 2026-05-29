@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type RangePreset = "today" | "yesterday" | "7d" | "28d" | "custom";
 
@@ -50,6 +50,18 @@ export default function DateFilter({ value, onChange }: Props) {
   const [showPicker, setShowPicker] = useState(false);
   const [from, setFrom] = useState(value.from.toISOString().slice(0, 10));
   const [to, setTo] = useState(value.to.toISOString().slice(0, 10));
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showPicker) return;
+    const onDoc = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [showPicker]);
 
   const select = (id: RangePreset) => {
     if (id === "custom") {
@@ -66,7 +78,7 @@ export default function DateFilter({ value, onChange }: Props) {
   };
 
   return (
-    <div style={{ position: "relative", display: "flex", justifyContent: "flex-start" }}>
+    <div ref={wrapRef} style={{ position: "relative", display: "inline-flex", justifyContent: "flex-end" }}>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
         {OPTIONS.map((opt) => {
           const active = value.preset === opt.id;
@@ -96,31 +108,54 @@ export default function DateFilter({ value, onChange }: Props) {
       </div>
       {showPicker && (
         <div
-          className="absolute left-0 top-full z-20 mt-2 flex flex-col gap-3 p-4"
-          style={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12, minWidth: 280, boxShadow: "var(--shadow-md)" }}
+          style={{
+            position: "absolute",
+            right: 0,
+            top: "calc(100% + 8px)",
+            zIndex: 50,
+            width: 280,
+            background: "#1a1a1a",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 12,
+            padding: 16,
+            boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+          }}
         >
-          <label className="flex flex-col gap-1 text-xs" style={{ color: "#a0a0a0" }}>
-            De
-            <input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, padding: "6px 10px", color: "#fff" }}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs" style={{ color: "#a0a0a0" }}>
-            Até
-            <input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, padding: "6px 10px", color: "#fff" }}
-            />
-          </label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#a0a0a0", flex: 1 }}>
+              De
+              <input
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                style={{ background: "#0a0a0b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 12px", color: "#fff", width: "100%", boxSizing: "border-box" }}
+              />
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#a0a0a0", flex: 1 }}>
+              Até
+              <input
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                style={{ background: "#0a0a0b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 12px", color: "#fff", width: "100%", boxSizing: "border-box" }}
+              />
+            </label>
+          </div>
           <button
             type="button"
             onClick={applyCustom}
-            className="btn-gradient rounded-md py-2 text-sm font-medium text-white"
+            style={{
+              marginTop: 12,
+              width: "100%",
+              height: 36,
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              background: "linear-gradient(90deg, #6366F1, #A855F7)",
+            }}
           >
             Aplicar
           </button>
