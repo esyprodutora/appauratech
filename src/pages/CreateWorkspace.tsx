@@ -10,14 +10,15 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Video, ShoppingCart, ClipboardList, MapPin } from "lucide-react";
 
 type TemplateId = "vsl" | "ecommerce" | "leads" | "local";
 
-const TEMPLATES: Array<{ id: TemplateId; title: string; subtitle: string }> = [
-  { id: "vsl", title: "VSL / Infoproduto", subtitle: "Páginas de venda longas" },
-  { id: "ecommerce", title: "E-commerce", subtitle: "Loja virtual" },
-  { id: "leads", title: "Captura de Leads / Quiz", subtitle: "Funis de leads" },
-  { id: "local", title: "Negócio Local / WhatsApp", subtitle: "Conversão por mensagem" },
+const TEMPLATES: Array<{ id: TemplateId; title: string; subtitle: string; icon: React.ReactNode }> = [
+  { id: "vsl", title: "VSL / Infoproduto", subtitle: "Páginas de venda longas", icon: <Video size={20} /> },
+  { id: "ecommerce", title: "E-commerce", subtitle: "Loja virtual", icon: <ShoppingCart size={20} /> },
+  { id: "leads", title: "Captura de Leads / Quiz", subtitle: "Funis de leads", icon: <ClipboardList size={20} /> },
+  { id: "local", title: "Negócio Local / WhatsApp", subtitle: "Conversão por mensagem", icon: <MapPin size={20} /> },
 ];
 
 function scoreLabel(s: number) {
@@ -148,11 +149,14 @@ export default function CreateWorkspace() {
                     onClick={() => setTemplate(t.id)}
                     className={`rounded-lg p-4 text-left transition-colors ${
                       selected
-                        ? "bg-[#1C1C1E] border-2 border-[#6366F1]"
+                        ? "bg-[#1a1040] border-2 border-[#7c3aed]"
                         : "bg-[#1C1C1E] border border-white/10 hover:border-white/20"
                     }`}
                   >
-                    <p className="font-medium text-white">{t.title}</p>
+                    <div className="flex items-center gap-2 text-[#94A3B8]">
+                      {t.icon}
+                    </div>
+                    <p className="mt-2 font-bold text-white">{t.title}</p>
                     <p className="mt-1 text-xs text-[#94A3B8]">{t.subtitle}</p>
                   </button>
                 );
