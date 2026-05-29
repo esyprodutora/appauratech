@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import AuraLogo from "@/components/AuraLogo";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -45,7 +44,11 @@ export default function Login() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#0A0A0B] px-4 py-10">
       <div className="mb-6 flex flex-col items-center">
-        <AuraLogo size={36} fontSize={30} />
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <circle cx="16" cy="16" r="14" stroke="#7c3aed" strokeWidth="1.5" />
+          <circle cx="16" cy="16" r="9" stroke="#7c3aed" strokeWidth="1" opacity="0.5" />
+          <circle cx="16" cy="16" r="3" fill="#7c3aed" />
+        </svg>
         <p className="mt-2" style={{ color: "#a0a0a0", fontSize: "13px" }}>
           Inteligência invisível. Resultado real.
         </p>
@@ -76,7 +79,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-11 rounded-lg border-white/10 bg-[#1C1C1E] text-white placeholder:text-white/30"
+              className="min-h-[48px] rounded-lg border-white/10 bg-[#1C1C1E] px-4 py-3 text-white placeholder:text-white/30"
             />
           </div>
           <div className="space-y-2">
@@ -90,7 +93,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-11 rounded-lg border-white/10 bg-[#1C1C1E] pr-10 text-white"
+                className="min-h-[48px] rounded-lg border-white/10 bg-[#1C1C1E] px-4 py-3 pr-10 text-white"
               />
               <button
                 type="button"
@@ -139,7 +142,16 @@ export default function Login() {
 
         <p className="mt-6 text-center text-sm" style={{ color: "#94A3B8" }}>
           Não tem conta?{" "}
-          <Link to="/register" style={{ color: "#6366F1" }} className="font-medium hover:underline">
+          <Link
+            to="/register"
+            className="font-medium hover:underline"
+            style={{
+              background: "linear-gradient(90deg, #7c3aed, #ec4899)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
             Criar conta grátis
           </Link>
         </p>
