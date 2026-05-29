@@ -88,18 +88,6 @@ export default function Workspaces() {
       setLoading(false);
     }
   }
-  /* removed legacy single-count block */ async function _legacyNoop() {
-    if (false) {
-      const ws = { id: "" };
-      const since = "";
-      const { count } = await supabase
-              .from("active_sessions")
-              .select("id", { count: "exact", head: true })
-              .eq("workspace_id", ws.id)
-              .gte("created_at", since);
-      void count;
-    }
-  }
 
   if (authLoading || loading) {
     return (
