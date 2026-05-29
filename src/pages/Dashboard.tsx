@@ -18,6 +18,37 @@ import {
 } from "recharts";
 import DateFilter, { DateRange, computeRange } from "@/components/DateFilter";
 
+function buildChart(
+  rows: Array<{ created_at: string; score: number | null }>,
+  range: DateRange
+) {
+  const byHour = range.preset === "today" || range.preset === "yesterday";
+  const buckets = new Map<string, number>();
+  const start = new Date(range.from);
+  const end = new Date(range.to);
+  if (byHour) {
+    const cur = new Date(start); cur.setMinutes(0, 0, 0);
+    while (cur <= end) {
+      buckets.set(cur.toISOString().slice(0, 13), 0);
+      cur.setHours(cur.getHours() + 1);
+    }
+  } else {
+    const cur = new Date(start); cur.setHours(0, 0, 0, 0);
+    while (cur <= end) {
+      buckets.set(cur.toISOString().slice(0, 10), 0);
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
+  for (const r of rows) {
+    const k = byHour ? r.created_at.slice(0, 13) : r.created_at.slice(0, 10);
+    if (buckets.has(k)) buckets.set(k, (buckets.get(k) ?? 0) + 1);
+  }
+  return Array.from(buckets.entries()).map(([k, v]) => ({
+    date: byHour ? k.slice(11) + "h" : k.slice(8, 10) + "/" + k.slice(5, 7),
+    value: v,
+  }));
+}
+
 interface Metric {
   label: string;
   value: string;
