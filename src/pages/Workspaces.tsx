@@ -4,7 +4,7 @@ import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Plus, ExternalLink } from "lucide-react";
+import { Plus, ExternalLink, Radio } from "lucide-react";
 
 interface Workspace {
   id: string;
@@ -55,7 +55,10 @@ export default function Workspaces() {
   return (
     <Layout>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Workspaces</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Seus Workspaces</h1>
+          <p className="text-muted-foreground">Cada site monitorado é um workspace</p>
+        </div>
         <Button onClick={() => navigate("/workspaces/new")}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Workspace
@@ -63,11 +66,18 @@ export default function Workspaces() {
       </div>
 
       {workspaces.length === 0 ? (
-        <div className="mt-12 flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
-          <p className="text-muted-foreground">Nenhum workspace encontrado</p>
-          <Button className="mt-4" onClick={() => navigate("/workspaces/new")}>
+        <div
+          className="mt-12 flex flex-col items-center justify-center rounded-xl p-12 text-center"
+          style={{ background: "#111111", border: "1px solid #2a2a2a" }}
+        >
+          <Radio className="h-12 w-12" style={{ color: "#a0a0a0" }} />
+          <h3 className="mt-4 text-lg font-semibold text-white">Nenhum workspace ainda</h3>
+          <p className="mt-1 max-w-md text-sm" style={{ color: "#a0a0a0" }}>
+            Crie seu primeiro workspace para começar a qualificar tráfego.
+          </p>
+          <Button className="btn-gradient mt-6 text-white" onClick={() => navigate("/workspaces/new")}>
             <Plus className="mr-2 h-4 w-4" />
-            Criar Workspace
+            Criar workspace
           </Button>
         </div>
       ) : (

@@ -5,13 +5,23 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, Users, MousePointerClick, Eye, Briefcase } from "lucide-react";
+import { ArrowUpRight, Users, MousePointerClick, Eye, Briefcase, Inbox } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface Metric {
   label: string;
-  value: number;
+  value: string;
   change: string;
   icon: React.ElementType;
+  valueColor?: string;
 }
 
 export default function Dashboard() {
@@ -57,39 +67,47 @@ export default function Dashboard() {
 
   const metrics: Metric[] = [
     {
-      label: "Workspaces",
-      value: workspacesCount,
+      label: "SESSÕES QUALIFICADAS HOJE",
+      value: workspacesCount.toLocaleString("pt-BR"),
       change: "+0%",
       icon: Briefcase,
     },
     {
-      label: "Eventos Totais",
-      value: eventsCount,
+      label: "SCORE MÉDIO DAS SESSÕES",
+      value: "0.0",
       change: "+0%",
       icon: MousePointerClick,
     },
     {
-      label: "Visitantes",
-      value: 0,
+      label: "EVENTOS ENVIADOS ÀS PLATAFORMAS",
+      value: eventsCount.toLocaleString("pt-BR"),
       change: "+0%",
       icon: Users,
     },
     {
-      label: "Pageviews",
-      value: 0,
+      label: "SCORE ≥ 85 (ALTA INTENÇÃO)",
+      value: "0",
       change: "+0%",
       icon: Eye,
+      valueColor: "#10b981",
     },
   ];
 
-  const hasData = workspacesCount > 0 || eventsCount > 0;
+  const chartData = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return {
+      date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+      value: 0,
+    };
+  });
 
   return (
     <Layout>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Visão geral do seu tráfego</p>
+          <h1 className="text-2xl font-bold">Visão Geral</h1>
+          <p className="text-muted-foreground">Métricas em tempo real do seu tráfego qualificado</p>
         </div>
         <Button onClick={() => navigate("/workspaces/new")}>
           <ArrowUpRight className="mr-2 h-4 w-4" />
@@ -103,14 +121,25 @@ export default function Dashboard() {
           return (
             <Card key={metric.label}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle
+                  className="font-medium"
+                  style={{
+                    fontSize: "11px",
+                    color: "#a0a0a0",
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                  }}
+                >
                   {metric.label}
                 </CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {loading ? "—" : metric.value.toLocaleString("pt-BR")}
+                <div
+                  className="text-2xl font-bold"
+                  style={metric.valueColor ? { color: metric.valueColor } : undefined}
+                >
+                  {loading ? "—" : metric.value}
                 </div>
                 <p className="text-xs text-muted-foreground">{metric.change} vs mês passado</p>
               </CardContent>
@@ -119,20 +148,50 @@ export default function Dashboard() {
         })}
       </div>
 
-      {!hasData && !loading && (
-        <div className="mt-12 flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
-          <p className="text-muted-foreground">Nenhum dado disponível ainda</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Crie um workspace e instale o script para começar a rastrear
-          </p>
-          <div className="mt-4 flex gap-2">
-            <Button onClick={() => navigate("/workspaces/new")}>Criar Workspace</Button>
-            <Button variant="outline" onClick={() => navigate("/install")}>
-              Instalar Script
-            </Button>
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-white">
+            Sessões qualificadas — últimos 7 dias
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div style={{ width: "100%", height: 260 }}>
+            <ResponsiveContainer>
+              <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+                <XAxis dataKey="date" stroke="#a0a0a0" fontSize={12} />
+                <YAxis stroke="#a0a0a0" fontSize={12} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{
+                    background: "#111111",
+                    border: "1px solid #2a2a2a",
+                    borderRadius: 8,
+                    color: "#F8FAFC",
+                  }}
+                />
+                <Line type="monotone" dataKey="value" stroke="#7c3aed" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-        </div>
-      )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-white">
+            Últimas sessões qualificadas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <Inbox className="h-10 w-10" style={{ color: "#a0a0a0" }} />
+            <p className="mt-3 text-sm font-medium text-white">Nenhuma sessão ainda</p>
+            <p className="mt-1 max-w-md text-xs" style={{ color: "#a0a0a0" }}>
+              Instale o script AURA no seu site para começar a capturar sessões qualificadas.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </Layout>
   );
 }
