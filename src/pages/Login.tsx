@@ -118,9 +118,10 @@ export default function Login() {
 
         <Button
           type="button"
+          variant="ghost"
           disabled={isLoading}
           onClick={handleGoogleSignIn}
-          className="h-11 w-full rounded-lg text-[15px] font-semibold hover:bg-white/5"
+          className="h-11 w-full rounded-lg text-[15px] font-semibold shadow-none hover:bg-[#222222] hover:text-white"
           style={{
             background: "#1a1a1a",
             color: "#ffffff",
