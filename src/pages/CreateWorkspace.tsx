@@ -149,11 +149,14 @@ export default function CreateWorkspace() {
                     onClick={() => setTemplate(t.id)}
                     className={`rounded-lg p-4 text-left transition-colors ${
                       selected
-                        ? "bg-[#1C1C1E] border-2 border-[#6366F1]"
+                        ? "bg-[#1a1040] border-2 border-[#7c3aed]"
                         : "bg-[#1C1C1E] border border-white/10 hover:border-white/20"
                     }`}
                   >
-                    <p className="font-medium text-white">{t.title}</p>
+                    <div className="flex items-center gap-2 text-[#94A3B8]">
+                      {t.icon}
+                    </div>
+                    <p className="mt-2 font-bold text-white">{t.title}</p>
                     <p className="mt-1 text-xs text-[#94A3B8]">{t.subtitle}</p>
                   </button>
                 );
