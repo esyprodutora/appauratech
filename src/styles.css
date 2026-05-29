@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -62,74 +63,47 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
-}
+  --radius: 0.5rem;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  /* AURA dark palette */
+  --background: #0A0A0B;
+  --foreground: #F8FAFC;
+  --card: #141415;
+  --card-foreground: #F8FAFC;
+  --popover: #141415;
+  --popover-foreground: #F8FAFC;
+  --primary: #6366F1;
+  --primary-foreground: #FFFFFF;
+  --primary-glow: #A855F7;
+  --secondary: #1C1C1E;
+  --secondary-foreground: #F8FAFC;
+  --muted: #1C1C1E;
+  --muted-foreground: #94A3B8;
+  --accent: #1C1C1E;
+  --accent-foreground: #F8FAFC;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: #1C1C1E;
+  --ring: #6366F1;
+
+  --chart-1: #6366F1;
+  --chart-2: #A855F7;
+  --chart-3: #22D3EE;
+  --chart-4: #10B981;
+  --chart-5: #F59E0B;
+
+  --sidebar: #0F0F10;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #6366F1;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1C1C1E;
+  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-ring: #6366F1;
+
+  --gradient-primary: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
 }
 
 @layer base {
@@ -140,5 +114,29 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .aura-logo {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    color: #F8FAFC;
+    line-height: 1;
+  }
+  .aura-logo-dot {
+    color: #6366F1;
+  }
+  .btn-gradient {
+    background: var(--gradient-primary);
+    color: #fff;
+    border: none;
+    transition: filter 0.2s ease, transform 0.2s ease;
+  }
+  .btn-gradient:hover {
+    filter: brightness(1.1);
   }
 }
