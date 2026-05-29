@@ -247,7 +247,7 @@ export default function WorkspaceDetail() {
               { label: "Sessões (7d)", value: totalSessions },
               { label: "Eventos CAPI", value: totalEvents },
               { label: "Taxa sucesso", value: `${successRate}%` },
-              { label: "Status", value: workspace.status },
+              { label: "Status", value: "ativo" },
             ].map((m) => (
               <Card key={m.label} className="bg-[#141415] border-white/10">
                 <CardContent className="pt-6">
@@ -421,7 +421,7 @@ export default function WorkspaceDetail() {
               </div>
               <div>
                 <p className="text-[#94A3B8]">Status</p>
-                <p className="text-white capitalize">{workspace.status}</p>
+                <p className="text-white capitalize">ativo</p>
               </div>
               <div>
                 <p className="text-[#94A3B8]">Criado em</p>
@@ -441,7 +441,7 @@ export default function WorkspaceDetail() {
                       <CardTitle className="text-white">{p.name}</CardTitle>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-[#94A3B8]">Ativo</span>
-                        <Switch checked={c.active} onCheckedChange={(v) => updateCred(p.id, { active: v })} />
+                        <Switch checked={c.is_active} onCheckedChange={(v) => updateCred(p.id, { is_active: v })} />
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -457,8 +457,8 @@ export default function WorkspaceDetail() {
                         <Label className="text-[#94A3B8] text-xs">Token de Acesso</Label>
                         <Input
                           type={c.showToken ? "text" : "password"}
-                          value={c.access_token}
-                          onChange={(e) => updateCred(p.id, { access_token: e.target.value })}
+                          value={c.vault_secret_id}
+                          onChange={(e) => updateCred(p.id, { vault_secret_id: e.target.value })}
                           className="bg-[#1C1C1E] border-white/10 text-white font-mono"
                         />
                         <button
