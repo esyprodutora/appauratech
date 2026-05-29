@@ -34,11 +34,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen">
       <aside className="flex w-64 flex-col border-r bg-sidebar">
         <div className="p-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground">
-              A
-            </div>
-            <span className="text-lg font-bold tracking-tight text-sidebar-foreground">AURA</span>
+          <Link to="/" className="flex items-center">
+            <span className="aura-logo" style={{ fontSize: "24px" }}>
+              aura<span className="aura-logo-dot">.</span>
+            </span>
           </Link>
         </div>
 
