@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import AuraLogo from "@/components/AuraLogo";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -42,26 +43,24 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0A0A0B] px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0A0A0B] px-4 py-10">
+      <div className="mb-6 flex flex-col items-center">
+        <AuraLogo size={36} fontSize={30} />
+        <p className="mt-2" style={{ color: "#a0a0a0", fontSize: "13px" }}>
+          Inteligência invisível. Resultado real.
+        </p>
+      </div>
       <div
         className="w-full max-w-sm rounded-2xl border p-8"
         style={{
-          background: "#141415",
-          borderColor: "rgba(255,255,255,0.08)",
+          background: "#111111",
+          borderColor: "#2a2a2a",
         }}
       >
-        <div className="mb-6 text-center">
-          <h1
-            className="aura-logo"
-            style={{ fontSize: "28px" }}
-          >
-            aura<span className="aura-logo-dot">.</span>
-          </h1>
-          <p
-            className="mt-1"
-            style={{ color: "#94A3B8", fontSize: "13px", marginBottom: "24px" }}
-          >
-            Inteligência invisível. Resultado real.
+        <div className="mb-6">
+          <h2 className="text-[24px] font-bold text-white">Bem-vindo de volta</h2>
+          <p className="mt-1 text-sm" style={{ color: "#a0a0a0" }}>
+            Acesse seu painel AURA
           </p>
         </div>
 
@@ -121,10 +120,11 @@ export default function Login() {
           type="button"
           disabled={isLoading}
           onClick={handleGoogleSignIn}
-          className="h-11 w-full rounded-lg text-[15px] font-semibold text-white"
+          className="h-11 w-full rounded-lg text-[15px] font-semibold hover:bg-white/90"
           style={{
-            background: "#1C1C1E",
-            border: "1px solid rgba(255,255,255,0.1)",
+            background: "#ffffff",
+            color: "#111111",
+            border: "1px solid #e5e7eb",
           }}
         >
           <svg className="mr-2" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -139,7 +139,7 @@ export default function Login() {
         <p className="mt-6 text-center text-sm" style={{ color: "#94A3B8" }}>
           Não tem conta?{" "}
           <Link to="/register" style={{ color: "#6366F1" }} className="font-medium hover:underline">
-            Cadastre-se
+            Criar conta grátis
           </Link>
         </p>
       </div>
