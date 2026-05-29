@@ -66,8 +66,8 @@ export default function DateFilter({ value, onChange }: Props) {
   };
 
   return (
-    <div className="relative flex justify-start">
-      <div className="flex flex-wrap items-center">
+    <div style={{ position: "relative", display: "flex", justifyContent: "flex-start" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
         {OPTIONS.map((opt) => {
           const active = value.preset === opt.id;
           return (
@@ -75,8 +75,19 @@ export default function DateFilter({ value, onChange }: Props) {
               key={opt.id}
               type="button"
               onClick={() => select(opt.id)}
-              className="aura-date-tab"
-              data-active={active}
+              style={{
+                padding: "5px 12px",
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+                background: active ? "rgba(99,102,241,0.15)" : "transparent",
+                color: active ? "#FFFFFF" : "#94A3B8",
+                border: active
+                  ? "1px solid rgba(99,102,241,0.4)"
+                  : "1px solid rgba(255,255,255,0.08)",
+                transition: "background 150ms ease, color 150ms ease",
+              }}
             >
               {opt.label}
             </button>
