@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Video, ShoppingCart, ClipboardList, MapPin } from "lucide-react";
 
 type TemplateId = "vsl" | "ecommerce" | "leads" | "local";
 
