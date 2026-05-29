@@ -10,14 +10,15 @@ import WorkspaceDetail from "./pages/WorkspaceDetail";
 import InstallScript from "./pages/InstallScript";
 import Plans from "./pages/Plans";
 import Settings from "./pages/Settings";
+import LandingPage from "./pages/LandingPage";
 
 export default function App() {
   return (
     <AuthProvider>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/workspaces" element={<Workspaces />} />
         <Route path="/workspaces/new" element={<CreateWorkspace />} />
