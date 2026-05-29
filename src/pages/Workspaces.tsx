@@ -12,7 +12,9 @@ interface Workspace {
   name: string;
   domain: string;
   template: string | null;
+  score_cutoff: number | null;
   created_at: string;
+  sessions7d?: number;
 }
 
 const TEMPLATE_LABEL: Record<string, { label: string; bg: string; color: string }> = {
@@ -44,10 +46,24 @@ export default function Workspaces() {
       const org = await ensureOrganization(user);
       const { data, error } = await supabase
         .from("workspaces")
-        .select("id, name, domain, template, created_at")
+        .select("id, name, domain, template, score_cutoff, created_at")
         .eq("org_id", org.id)
         .order("created_at", { ascending: false });
-      if (!error && data) setWorkspaces(data as Workspace[]);
+      if (!error && data) {
+        const list = data as Workspace[];
+        const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const withCounts = await Promise.all(
+          list.map(async (ws) => {
+            const { count } = await supabase
+              .from("active_sessions")
+              .select("id", { count: "exact", head: true })
+              .eq("workspace_id", ws.id)
+              .gte("created_at", since);
+            return { ...ws, sessions7d: count ?? 0 };
+          })
+        );
+        setWorkspaces(withCounts);
+      }
     } finally {
       setLoading(false);
     }
@@ -136,7 +152,16 @@ export default function Workspaces() {
                   >
                     {tpl.label}
                   </span>
-                  <span style={{ color: "#a0a0a0", fontSize: 12 }}>Score: 60</span>
+                  <span style={{ color: "#a0a0a0", fontSize: 12 }}>
+                    Score: {ws.score_cutoff ?? 60}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex flex-col gap-1" style={{ color: "#a0a0a0", fontSize: 12 }}>
+                  <span>{(ws.sessions7d ?? 0).toLocaleString("pt-BR")} sessões esta semana</span>
+                  <span>
+                    Criado em {new Date(ws.created_at).toLocaleDateString("pt-BR")}
+                  </span>
                 </div>
 
                 <Link

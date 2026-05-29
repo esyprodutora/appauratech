@@ -28,6 +28,7 @@ import {
 } from "recharts";
 import { Copy, Check, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import DateFilter, { DateRange, computeRange } from "@/components/DateFilter";
 
 interface Workspace {
   id: string;
@@ -71,6 +72,7 @@ export default function WorkspaceDetail() {
   const [sessions, setSessions] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [chartData, setChartData] = useState<Array<{ day: string; sessions: number }>>([]);
+  const [range, setRange] = useState<DateRange>(() => computeRange("7d"));
   const [copiedScript, setCopiedScript] = useState(false);
   const [creds, setCreds] = useState<Record<PlatformId, CapiCred>>({
     meta: emptyCred(),
@@ -93,19 +95,25 @@ export default function WorkspaceDetail() {
   useEffect(() => {
     if (!workspace) return;
     (async () => {
+      const fromIso = range.from.toISOString();
+      const toIso = range.to.toISOString();
       const [sessRes, evRes, credsRes] = await Promise.all([
         supabase
           .from("active_sessions")
           .select("*")
           .eq("workspace_id", workspace.id)
+          .gte("created_at", fromIso)
+          .lte("created_at", toIso)
           .order("last_seen_at", { ascending: false })
-          .limit(50),
+          .limit(200),
         supabase
           .from("capi_events_log")
           .select("*")
           .eq("workspace_id", workspace.id)
+          .gte("sent_at", fromIso)
+          .lte("sent_at", toIso)
           .order("sent_at", { ascending: false })
-          .limit(50),
+          .limit(200),
         supabase
           .from("capi_credentials")
           .select("platform, pixel_id, vault_secret_id, is_active")
@@ -114,21 +122,24 @@ export default function WorkspaceDetail() {
       setSessions(sessRes.data ?? []);
       setEvents(evRes.data ?? []);
 
-      // Build 7-day chart
-      const days: Record<string, number> = {};
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        days[d.toISOString().slice(0, 10)] = 0;
+      // Build chart bucketed by hour (today/yesterday) or day (else)
+      const byHour = range.preset === "today" || range.preset === "yesterday";
+      const buckets = new Map<string, number>();
+      const cur = new Date(range.from);
+      if (byHour) cur.setMinutes(0, 0, 0); else cur.setHours(0, 0, 0, 0);
+      while (cur <= range.to) {
+        buckets.set(byHour ? cur.toISOString().slice(0, 13) : cur.toISOString().slice(0, 10), 0);
+        if (byHour) cur.setHours(cur.getHours() + 1); else cur.setDate(cur.getDate() + 1);
       }
       for (const s of sessRes.data ?? []) {
-        const k = (s.last_seen_at ?? s.created_at ?? "").slice(0, 10);
-        if (k in days) days[k]++;
+        const ts = (s.created_at ?? s.last_seen_at ?? "");
+        const k = byHour ? ts.slice(0, 13) : ts.slice(0, 10);
+        if (buckets.has(k)) buckets.set(k, (buckets.get(k) ?? 0) + 1);
       }
       setChartData(
-        Object.entries(days).map(([day, sessions]) => ({
-          day: day.slice(5),
-          sessions,
+        Array.from(buckets.entries()).map(([k, v]) => ({
+          day: byHour ? k.slice(11) + "h" : k.slice(8, 10) + "/" + k.slice(5, 7),
+          sessions: v,
         }))
       );
 
@@ -149,7 +160,7 @@ export default function WorkspaceDetail() {
         });
       }
     })();
-  }, [workspace]);
+  }, [workspace, range.from.getTime(), range.to.getTime()]);
 
   const sources = useMemo(() => {
     const map: Record<string, number> = {};
@@ -242,9 +253,10 @@ export default function WorkspaceDetail() {
 
         {/* Visão Geral */}
         <TabsContent value="overview" className="mt-4 space-y-4">
+          <DateFilter value={range} onChange={setRange} />
           <div className="grid gap-4 md:grid-cols-4">
             {[
-              { label: "Sessões (7d)", value: totalSessions },
+              { label: "Sessões", value: totalSessions },
               { label: "Eventos CAPI", value: totalEvents },
               { label: "Taxa sucesso", value: `${successRate}%` },
               { label: "Status", value: "ativo" },
@@ -259,7 +271,7 @@ export default function WorkspaceDetail() {
           </div>
           <Card className="bg-[#141415] border-white/10">
             <CardHeader>
-              <CardTitle className="text-white">Sessões últimos 7 dias</CardTitle>
+              <CardTitle className="text-white">Sessões — período selecionado</CardTitle>
             </CardHeader>
             <CardContent>
               <div style={{ width: "100%", height: 260 }}>
@@ -286,6 +298,7 @@ export default function WorkspaceDetail() {
 
         {/* Sessões */}
         <TabsContent value="sessions" className="mt-4 space-y-4">
+          <DateFilter value={range} onChange={setRange} />
           <Card className="bg-[#141415] border-white/10">
             <CardHeader>
               <CardTitle className="text-white">Sessões ativas</CardTitle>
