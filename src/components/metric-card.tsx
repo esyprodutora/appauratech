@@ -30,7 +30,7 @@ export function MetricCard({
         </span>
       </div>
       <p
-        className={`mt-3 font-[Geist] text-[32px] font-bold leading-none tracking-[-0.025em] tabular-nums ${valueColor}`}
+        className={`mt-3 font-[Geist] text-2xl font-bold leading-none tracking-[-0.025em] tabular-nums ${valueColor}`}
       >
         {value}
       </p>
