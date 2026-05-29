@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
 import { AuthProvider } from "./contexts/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<Dashboard />} />
       </Routes>
+      <Toaster position="top-right" richColors />
     </AuthProvider>
   );
 }
