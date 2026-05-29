@@ -276,8 +276,14 @@ export default function WorkspaceDetail() {
             <CardContent>
               <div style={{ width: "100%", height: 260 }}>
                 <ResponsiveContainer>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1C1C1E" />
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="wsAreaFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.15} />
+                        <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid horizontal vertical={false} stroke="#2a2a2a" />
                     <XAxis dataKey="day" stroke="#94A3B8" fontSize={12} />
                     <YAxis stroke="#94A3B8" fontSize={12} />
                     <Tooltip
@@ -288,8 +294,15 @@ export default function WorkspaceDetail() {
                         color: "#F8FAFC",
                       }}
                     />
-                    <Line type="monotone" dataKey="sessions" stroke="#6366F1" strokeWidth={2} dot={false} />
-                  </LineChart>
+                    <Area
+                      type="monotone"
+                      dataKey="sessions"
+                      stroke="#7c3aed"
+                      strokeWidth={2}
+                      dot={false}
+                      fill="url(#wsAreaFill)"
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
