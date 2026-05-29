@@ -8,7 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -26,9 +36,11 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { Copy, Check, Trash2 } from "lucide-react";
+import { Copy, Check, Trash2, Briefcase, Activity, Send, Flame } from "lucide-react";
 import { toast } from "sonner";
-import DateFilter, { DateRange, computeRange } from "@/components/DateFilter";
+import { MetricCard } from "@/components/metric-card";
+import { ScoreBadge } from "@/components/score-badge";
+import { PlatformBadge, TemplateBadge } from "@/components/platform-badge";
 
 interface Workspace {
   id: string;
@@ -36,6 +48,8 @@ interface Workspace {
   domain: string;
   public_token: string | null;
   template: string | null;
+  score_cutoff: number | null;
+  autopilot: boolean | null;
   created_at: string;
 }
 
