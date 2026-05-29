@@ -232,7 +232,7 @@ export default function Dashboard() {
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-base font-semibold text-white">
-            Sessões qualificadas — últimos 7 dias
+            Sessões qualificadas — período selecionado
           </CardTitle>
         </CardHeader>
         <CardContent>
