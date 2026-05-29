@@ -415,5 +415,4 @@
   /* Chart container reset */
   .recharts-cartesian-axis-tick text { fill: var(--subtle-foreground); }
   .recharts-cartesian-axis-line, .recharts-cartesian-axis-tick-line { stroke: transparent; }
-  }
 }
