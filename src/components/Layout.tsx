@@ -1,21 +1,20 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  LayoutDashboard,
+  Home,
   Radio,
-  Code2,
+  Code,
   CreditCard,
   Settings,
   LogOut,
-  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuraLogo from "@/components/AuraLogo";
 
 const navItems = [
-  { label: "Visão Geral", path: "/", icon: LayoutDashboard },
+  { label: "Visão Geral", path: "/", icon: Home },
   { label: "Workspaces", path: "/workspaces", icon: Radio },
-  { label: "Instalação", path: "/install", icon: Code2 },
+  { label: "Instalação", path: "/install", icon: Code },
   { label: "Planos", path: "/plans", icon: CreditCard },
   { label: "Configurações", path: "/settings", icon: Settings },
 ];
@@ -35,8 +34,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <aside
         className="flex w-64 flex-col"
         style={{
-          background: "#0A0A0B",
-          borderRight: "1px solid rgba(255,255,255,0.08)",
+          background: "#0f0f0f",
+          borderRight: "1px solid #1e1e1e",
         }}
       >
         <div className="p-4">
@@ -54,12 +53,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className="aura-nav-item"
-                    data-active={isActive}
+                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors"
+                    style={{
+                      background: isActive ? "#1a1040" : "transparent",
+                      color: isActive ? "#ffffff" : "#a0a0a0",
+                      borderLeft: isActive ? "3px solid #7c3aed" : "3px solid transparent",
+                      paddingLeft: isActive ? "9px" : "9px",
+                    }}
                   >
                     <Icon className="h-4 w-4" />
                     {item.label}
-                    {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
                   </Link>
                 </li>
               );
@@ -67,7 +70,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </ul>
         </nav>
 
-        <div className="p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="p-3" style={{ borderTop: "1px solid #1e1e1e" }}>
           <div className="mb-2 flex items-center gap-2 px-3 py-2">
             <div
               className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
@@ -84,8 +87,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start"
-            style={{ color: "#94A3B8" }}
+            className="w-full justify-start hover:text-white"
+            style={{ color: "#666", padding: "12px 16px" }}
             onClick={handleLogout}
           >
             <LogOut className="mr-2 h-4 w-4" />

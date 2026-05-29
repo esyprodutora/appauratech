@@ -5,11 +5,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { ensureOrganization } from "@/lib/org";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowUpRight, Users, MousePointerClick, Eye, Briefcase, Inbox } from "lucide-react";
+import { Users, MousePointerClick, Eye, Briefcase, Inbox } from "lucide-react";
 import {
-  LineChart,
-  Line,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -52,7 +59,6 @@ function buildChart(
 interface Metric {
   label: string;
   value: string;
-  change: string;
   icon: React.ElementType;
   valueColor?: string;
 }
@@ -66,6 +72,9 @@ export default function Dashboard() {
   const [eventsCount, setEventsCount] = useState(0);
   const [highScoreCount, setHighScoreCount] = useState(0);
   const [sessions, setSessions] = useState<Array<{ created_at: string; score: number | null }>>([]);
+  const [latestSessions, setLatestSessions] = useState<
+    Array<{ id: string; score: number | null; last_seen_at: string | null; created_at: string | null; workspace_id: string }>
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -95,13 +104,14 @@ export default function Dashboard() {
         setEventsCount(0);
         setHighScoreCount(0);
         setSessions([]);
+        setLatestSessions([]);
         return;
       }
 
       const fromIso = range.from.toISOString();
       const toIso = range.to.toISOString();
 
-      const [sessRes, evRes, highRes] = await Promise.all([
+      const [sessRes, evRes, highRes, latestRes] = await Promise.all([
         supabase
           .from("active_sessions")
           .select("created_at, score")
@@ -121,6 +131,12 @@ export default function Dashboard() {
           .gte("created_at", fromIso)
           .lte("created_at", toIso)
           .gte("score", 85),
+        supabase
+          .from("active_sessions")
+          .select("id, score, last_seen_at, created_at, workspace_id")
+          .in("workspace_id", workspaceIds)
+          .order("last_seen_at", { ascending: false })
+          .limit(50),
       ]);
 
       const sessRows = (sessRes.data ?? []) as Array<{ created_at: string; score: number | null }>;
@@ -130,6 +146,7 @@ export default function Dashboard() {
       setAvgScore(scored.length ? scored.reduce((a, b) => a + (b.score ?? 0), 0) / scored.length : 0);
       setEventsCount(evRes.count ?? 0);
       setHighScoreCount(highRes.count ?? 0);
+      setLatestSessions((latestRes.data ?? []) as typeof latestSessions);
     } finally {
       setLoading(false);
     }
@@ -153,25 +170,21 @@ export default function Dashboard() {
     {
       label: "SESSÕES QUALIFICADAS",
       value: sessionsCount.toLocaleString("pt-BR"),
-      change: "+0%",
       icon: Briefcase,
     },
     {
       label: "SCORE MÉDIO DAS SESSÕES",
       value: avgScore.toFixed(1),
-      change: "+0%",
       icon: MousePointerClick,
     },
     {
       label: "EVENTOS ENVIADOS ÀS PLATAFORMAS",
       value: eventsCount.toLocaleString("pt-BR"),
-      change: "+0%",
       icon: Users,
     },
     {
       label: "SCORE ≥ 85 (ALTA INTENÇÃO)",
       value: highScoreCount.toLocaleString("pt-BR"),
-      change: "+0%",
       icon: Eye,
       valueColor: "#10b981",
     },
@@ -181,18 +194,12 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Visão Geral</h1>
-          <p className="text-muted-foreground">Métricas em tempo real do seu tráfego qualificado</p>
-        </div>
-        <Button onClick={() => navigate("/workspaces/new")}>
-          <ArrowUpRight className="mr-2 h-4 w-4" />
-          Novo Workspace
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold">Visão Geral</h1>
+        <p className="text-muted-foreground">Métricas em tempo real do seu tráfego qualificado</p>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
         <DateFilter value={range} onChange={setRange} />
       </div>
 
@@ -200,14 +207,17 @@ export default function Dashboard() {
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
-            <Card key={metric.label}>
+            <Card
+              key={metric.label}
+              style={{ background: "#111111", border: "1px solid #1e1e1e" }}
+            >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle
                   className="font-medium"
                   style={{
                     fontSize: "11px",
-                    color: "#a0a0a0",
-                    letterSpacing: "0.05em",
+                    color: "#555",
+                    letterSpacing: "0.08em",
                     textTransform: "uppercase",
                   }}
                 >
@@ -217,19 +227,22 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div
-                  className="text-2xl font-bold"
-                  style={metric.valueColor ? { color: metric.valueColor } : undefined}
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: 700,
+                    color: metric.valueColor ?? "#ffffff",
+                    lineHeight: 1.1,
+                  }}
                 >
                   {loading ? "—" : metric.value}
                 </div>
-                <p className="text-xs text-muted-foreground">{metric.change} vs mês passado</p>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      <Card className="mt-6">
+      <Card className="mt-6" style={{ background: "#111111", border: "1px solid #1e1e1e" }}>
         <CardHeader>
           <CardTitle className="text-base font-semibold text-white">
             Sessões qualificadas — período selecionado
@@ -238,8 +251,14 @@ export default function Dashboard() {
         <CardContent>
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
-              <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+              <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="dashAreaFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.15} />
+                    <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid horizontal vertical={false} stroke="#2a2a2a" />
                 <XAxis dataKey="date" stroke="#a0a0a0" fontSize={12} />
                 <YAxis stroke="#a0a0a0" fontSize={12} allowDecimals={false} />
                 <Tooltip
@@ -250,27 +269,66 @@ export default function Dashboard() {
                     color: "#F8FAFC",
                   }}
                 />
-                <Line type="monotone" dataKey="value" stroke="#7c3aed" strokeWidth={2} dot={{ r: 3 }} />
-              </LineChart>
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#7c3aed"
+                  strokeWidth={2}
+                  dot={false}
+                  fill="url(#dashAreaFill)"
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="mt-6">
+      <Card className="mt-6" style={{ background: "#111111", border: "1px solid #1e1e1e" }}>
         <CardHeader>
           <CardTitle className="text-base font-semibold text-white">
             Últimas sessões qualificadas
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <Inbox className="h-10 w-10" style={{ color: "#a0a0a0" }} />
-            <p className="mt-3 text-sm font-medium text-white">Nenhuma sessão ainda</p>
-            <p className="mt-1 max-w-md text-xs" style={{ color: "#a0a0a0" }}>
-              Instale o script AURA no seu site para começar a capturar sessões qualificadas.
-            </p>
-          </div>
+          {latestSessions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <Inbox className="h-10 w-10" style={{ color: "#a0a0a0" }} />
+              <p className="mt-3 text-sm font-medium text-white">Nenhuma sessão ainda</p>
+              <p className="mt-1 max-w-md text-xs" style={{ color: "#a0a0a0" }}>
+                Instale o script AURA no seu site para começar a capturar sessões qualificadas.
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Último evento</TableHead>
+                  <TableHead>Criada em</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {latestSessions.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell
+                      style={{
+                        color: (s.score ?? 0) >= 85 ? "#10b981" : "#ffffff",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {s.score ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      {s.last_seen_at ? new Date(s.last_seen_at).toLocaleString("pt-BR") : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {s.created_at ? new Date(s.created_at).toLocaleString("pt-BR") : "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </Layout>
