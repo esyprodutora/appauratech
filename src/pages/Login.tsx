@@ -120,11 +120,11 @@ export default function Login() {
           type="button"
           disabled={isLoading}
           onClick={handleGoogleSignIn}
-          className="h-11 w-full rounded-lg text-[15px] font-semibold hover:bg-white/90"
+          className="h-11 w-full rounded-lg text-[15px] font-semibold hover:bg-white/5"
           style={{
-            background: "#ffffff",
-            color: "#111111",
-            border: "1px solid #e5e7eb",
+            background: "#1a1a1a",
+            color: "#ffffff",
+            border: "1px solid #2a2a2a",
           }}
         >
           <svg className="mr-2" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
