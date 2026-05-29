@@ -33,11 +33,9 @@ interface Workspace {
   id: string;
   name: string;
   domain: string;
-  token: string | null;
+  public_token: string | null;
   template: string | null;
-  status: string;
   created_at: string;
-  user_id: string;
 }
 
 type PlatformId = "meta" | "tiktok" | "google_ads" | "kwai";
@@ -52,15 +50,15 @@ const CDN_URL = "https://iynykpijbctbyhoaiyen.supabase.co/storage/v1/object/publ
 
 interface CapiCred {
   pixel_id: string;
-  access_token: string;
-  active: boolean;
+  vault_secret_id: string;
+  is_active: boolean;
   showToken: boolean;
   loading: boolean;
 }
 const emptyCred = (): CapiCred => ({
   pixel_id: "",
-  access_token: "",
-  active: false,
+  vault_secret_id: "",
+  is_active: false,
   showToken: false,
   loading: false,
 });
@@ -100,17 +98,17 @@ export default function WorkspaceDetail() {
           .from("active_sessions")
           .select("*")
           .eq("workspace_id", workspace.id)
-          .order("created_at", { ascending: false })
+          .order("last_seen_at", { ascending: false })
           .limit(50),
         supabase
           .from("capi_events_log")
           .select("*")
           .eq("workspace_id", workspace.id)
-          .order("created_at", { ascending: false })
+          .order("sent_at", { ascending: false })
           .limit(50),
         supabase
           .from("capi_credentials")
-          .select("platform, pixel_id, access_token, active")
+          .select("platform, pixel_id, vault_secret_id, is_active")
           .eq("workspace_id", workspace.id),
       ]);
       setSessions(sessRes.data ?? []);
@@ -124,7 +122,7 @@ export default function WorkspaceDetail() {
         days[d.toISOString().slice(0, 10)] = 0;
       }
       for (const s of sessRes.data ?? []) {
-        const k = (s.created_at ?? "").slice(0, 10);
+        const k = (s.last_seen_at ?? s.created_at ?? "").slice(0, 10);
         if (k in days) days[k]++;
       }
       setChartData(
@@ -137,13 +135,13 @@ export default function WorkspaceDetail() {
       if (credsRes.data) {
         setCreds((prev) => {
           const next = { ...prev };
-          for (const row of credsRes.data as Array<{ platform: PlatformId; pixel_id: string; access_token: string; active: boolean }>) {
+          for (const row of credsRes.data as Array<{ platform: PlatformId; pixel_id: string; vault_secret_id: string; is_active: boolean }>) {
             if (next[row.platform]) {
               next[row.platform] = {
                 ...next[row.platform],
                 pixel_id: row.pixel_id ?? "",
-                access_token: row.access_token ?? "",
-                active: !!row.active,
+                vault_secret_id: row.vault_secret_id ?? "",
+                is_active: !!row.is_active,
               };
             }
           }
@@ -163,7 +161,7 @@ export default function WorkspaceDetail() {
   }, [sessions]);
 
   const scriptCode = workspace
-    ? `<script\n  src="${CDN_URL}?token=${workspace.token ?? ""}"\n  data-template="${workspace.template ?? ""}"\n  async>\n</script>`
+    ? `<script\n  src="${CDN_URL}?token=${workspace.public_token ?? ""}"\n  data-template="${workspace.template ?? ""}"\n  async>\n</script>`
     : "";
 
   const copyScript = () => {
@@ -183,11 +181,10 @@ export default function WorkspaceDetail() {
     const { error } = await supabase.from("capi_credentials").upsert(
       {
         workspace_id: workspace.id,
-        user_id: workspace.user_id,
         platform: p,
         pixel_id: c.pixel_id,
-        access_token: c.access_token,
-        active: c.active,
+        vault_secret_id: c.vault_secret_id,
+        is_active: c.is_active,
       },
       { onConflict: "workspace_id,platform" }
     );
@@ -227,7 +224,7 @@ export default function WorkspaceDetail() {
 
   const totalSessions = sessions.length;
   const totalEvents = events.length;
-  const successEvents = events.filter((e) => e.status === "success" || e.status === "ok").length;
+  const successEvents = events.filter((e) => e.success === true).length;
   const successRate = totalEvents ? Math.round((successEvents / totalEvents) * 100) : 0;
 
   return (
@@ -250,7 +247,7 @@ export default function WorkspaceDetail() {
               { label: "Sessões (7d)", value: totalSessions },
               { label: "Eventos CAPI", value: totalEvents },
               { label: "Taxa sucesso", value: `${successRate}%` },
-              { label: "Status", value: workspace.status },
+              { label: "Status", value: "ativo" },
             ].map((m) => (
               <Card key={m.label} className="bg-[#141415] border-white/10">
                 <CardContent className="pt-6">
@@ -316,7 +313,7 @@ export default function WorkspaceDetail() {
                       <TableCell className="font-mono text-xs">{String(s.id).slice(0, 8)}</TableCell>
                       <TableCell>{s.platform ?? s.source ?? "—"}</TableCell>
                       <TableCell className="truncate max-w-xs">{s.url ?? s.page ?? "—"}</TableCell>
-                      <TableCell>{s.created_at ? new Date(s.created_at).toLocaleString("pt-BR") : "—"}</TableCell>
+                      <TableCell>{s.last_seen_at ? new Date(s.last_seen_at).toLocaleString("pt-BR") : "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -370,7 +367,7 @@ export default function WorkspaceDetail() {
                     </TableRow>
                   )}
                   {events.map((e) => {
-                    const ok = e.status === "success" || e.status === "ok";
+                    const ok = e.success === true;
                     return (
                       <TableRow key={e.id}>
                         <TableCell>{e.event_name ?? e.type ?? "—"}</TableCell>
@@ -379,10 +376,10 @@ export default function WorkspaceDetail() {
                         </TableCell>
                         <TableCell>
                           <Badge className={ok ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-red-500/20 text-red-300 border-red-500/30"}>
-                            {e.status ?? "—"}
+                            {ok ? "success" : "failed"}
                           </Badge>
                         </TableCell>
-                        <TableCell>{e.created_at ? new Date(e.created_at).toLocaleString("pt-BR") : "—"}</TableCell>
+                        <TableCell>{e.sent_at ? new Date(e.sent_at).toLocaleString("pt-BR") : "—"}</TableCell>
                       </TableRow>
                     );
                   })}
@@ -424,7 +421,7 @@ export default function WorkspaceDetail() {
               </div>
               <div>
                 <p className="text-[#94A3B8]">Status</p>
-                <p className="text-white capitalize">{workspace.status}</p>
+                <p className="text-white capitalize">ativo</p>
               </div>
               <div>
                 <p className="text-[#94A3B8]">Criado em</p>
@@ -444,7 +441,7 @@ export default function WorkspaceDetail() {
                       <CardTitle className="text-white">{p.name}</CardTitle>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-[#94A3B8]">Ativo</span>
-                        <Switch checked={c.active} onCheckedChange={(v) => updateCred(p.id, { active: v })} />
+                        <Switch checked={c.is_active} onCheckedChange={(v) => updateCred(p.id, { is_active: v })} />
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -460,8 +457,8 @@ export default function WorkspaceDetail() {
                         <Label className="text-[#94A3B8] text-xs">Token de Acesso</Label>
                         <Input
                           type={c.showToken ? "text" : "password"}
-                          value={c.access_token}
-                          onChange={(e) => updateCred(p.id, { access_token: e.target.value })}
+                          value={c.vault_secret_id}
+                          onChange={(e) => updateCred(p.id, { vault_secret_id: e.target.value })}
                           className="bg-[#1C1C1E] border-white/10 text-white font-mono"
                         />
                         <button

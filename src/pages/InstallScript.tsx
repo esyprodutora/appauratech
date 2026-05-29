@@ -15,13 +15,14 @@ import { Check, Copy, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { ensureOrganization } from "@/lib/org";
 
 const CDN_URL = "https://iynykpijbctbyhoaiyen.supabase.co/storage/v1/object/public/cdn/track.js";
 
 interface WorkspaceLite {
   id: string;
   name: string;
-  token: string | null;
+  public_token: string | null;
   template: string | null;
 }
 
@@ -37,20 +38,24 @@ export default function InstallScript() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase
-        .from("workspaces")
-        .select("id, name, token, template")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      const list = (data ?? []) as WorkspaceLite[];
-      setWorkspaces(list);
-      if (!selectedId && list.length > 0) setSelectedId(list[0].id);
-      setLoading(false);
+      try {
+        const org = await ensureOrganization(user);
+        const { data } = await supabase
+          .from("workspaces")
+          .select("id, name, public_token, template")
+          .eq("org_id", org.id)
+          .order("created_at", { ascending: false });
+        const list = (data ?? []) as WorkspaceLite[];
+        setWorkspaces(list);
+        if (!selectedId && list.length > 0) setSelectedId(list[0].id);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [user]);
 
   const selected = workspaces.find((w) => w.id === selectedId) ?? null;
-  const token = selected?.token ?? "TOKEN_DO_WORKSPACE";
+  const token = selected?.public_token ?? "TOKEN_DO_WORKSPACE";
   const template = selected?.template ?? "TEMPLATE_DO_WORKSPACE";
 
   const scriptCode = `<script\n  src="${CDN_URL}?token=${token}"\n  data-template="${template}"\n  async>\n</script>`;

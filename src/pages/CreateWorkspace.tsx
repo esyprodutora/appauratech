@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { ensureOrganization } from "@/lib/org";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,13 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Video, ShoppingCart, ClipboardList, MapPin } from "lucide-react";
 
-type TemplateId = "vsl" | "ecommerce" | "leads" | "local";
+type TemplateId = "vsl" | "ecommerce" | "lead_quiz" | "local_x1";
 
 const TEMPLATES: Array<{ id: TemplateId; title: string; subtitle: string; icon: React.ReactNode }> = [
   { id: "vsl", title: "VSL / Infoproduto", subtitle: "Páginas de venda longas", icon: <Video size={20} /> },
   { id: "ecommerce", title: "E-commerce", subtitle: "Loja virtual", icon: <ShoppingCart size={20} /> },
-  { id: "leads", title: "Captura de Leads / Quiz", subtitle: "Funis de leads", icon: <ClipboardList size={20} /> },
-  { id: "local", title: "Negócio Local / WhatsApp", subtitle: "Conversão por mensagem", icon: <MapPin size={20} /> },
+  { id: "lead_quiz", title: "Captura de Leads / Quiz", subtitle: "Funis de leads", icon: <ClipboardList size={20} /> },
+  { id: "local_x1", title: "Negócio Local / WhatsApp", subtitle: "Conversão por mensagem", icon: <MapPin size={20} /> },
 ];
 
 function scoreLabel(s: number) {
@@ -31,7 +32,7 @@ function sanitizeDomain(raw: string) {
   return raw.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
 }
 
-function genToken() {
+function genPublicToken() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID().replace(/-/g, "");
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
@@ -54,37 +55,18 @@ export default function CreateWorkspace() {
 
     setIsLoading(true);
     try {
-      // Ensure organization
-      const { data: existingOrg } = await supabase
-        .from("organizations")
-        .select("id")
-        .eq("owner_id", user.id)
-        .maybeSingle();
-
-      let orgId = existingOrg?.id as string | undefined;
-      if (!orgId) {
-        const { data: newOrg, error: orgErr } = await supabase
-          .from("organizations")
-          .insert({ owner_id: user.id, name: user.email ?? "Minha Organização" })
-          .select("id")
-          .single();
-        if (orgErr) throw orgErr;
-        orgId = newOrg.id;
-      }
-
-      const token = genToken();
+      const org = await ensureOrganization(user);
+      const public_token = genPublicToken();
       const { data: ws, error } = await supabase
         .from("workspaces")
         .insert({
-          user_id: user.id,
-          organization_id: orgId,
+          org_id: org.id,
           name,
           domain: cleanDomain,
           template,
           score_cutoff: score,
           autopilot,
-          token,
-          status: "active",
+          public_token,
         })
         .select("id")
         .single();
