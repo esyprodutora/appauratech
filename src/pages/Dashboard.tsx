@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { ensureOrganization } from "@/lib/org";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, MousePointerClick, Eye, Briefcase, Inbox } from "lucide-react";
+import { MetricCard } from "@/components/metric-card";
+import { ScoreBadge } from "@/components/score-badge";
 import {
   Table,
   TableBody,
@@ -60,7 +62,7 @@ interface Metric {
   label: string;
   value: string;
   icon: React.ElementType;
-  valueColor?: string;
+  accent?: "default" | "success";
 }
 
 export default function Dashboard() {
@@ -186,7 +188,7 @@ export default function Dashboard() {
       label: "SCORE ≥ 85 (ALTA INTENÇÃO)",
       value: highScoreCount.toLocaleString("pt-BR"),
       icon: Eye,
-      valueColor: "#10b981",
+      accent: "success",
     },
   ];
 
@@ -211,23 +213,15 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-6 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        {metrics.map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <div key={metric.label} className="metric-card">
-              <div className="flex items-center justify-between">
-                <span className="metric-label">{metric.label}</span>
-                <Icon className="h-3.5 w-3.5" style={{ color: "var(--subtle-foreground)" }} />
-              </div>
-              <div
-                className="metric-value mt-3"
-                style={metric.valueColor ? { color: metric.valueColor } : undefined}
-              >
-                {loading ? "—" : metric.value}
-              </div>
-            </div>
-          );
-        })}
+        {metrics.map((metric) => (
+          <MetricCard
+            key={metric.label}
+            label={metric.label}
+            value={loading ? "—" : metric.value}
+            icon={metric.icon}
+            accent={metric.accent}
+          />
+        ))}
       </div>
 
       <Card className="mt-4">
@@ -245,46 +239,46 @@ export default function Dashboard() {
               <AreaChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
                 <defs>
                   <linearGradient id="dashAreaFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#7C5CFF" stopOpacity={0.32} />
-                    <stop offset="100%" stopColor="#7C5CFF" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#A855F7" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="#6366F1" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="auraLine" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#6366F1" />
+                    <stop offset="100%" stopColor="#A855F7" />
                   </linearGradient>
                 </defs>
-                <CartesianGrid
-                  horizontal
-                  vertical={false}
-                  stroke="rgba(255,255,255,0.05)"
-                />
+                <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
                 <XAxis
                   dataKey="date"
                   stroke="transparent"
-                  tick={{ fill: "var(--subtle-foreground)", fontSize: 11 }}
+                  tick={{ fill: "#94A3B8", fontSize: 11 }}
                   tickMargin={10}
                 />
                 <YAxis
                   stroke="transparent"
-                  tick={{ fill: "var(--subtle-foreground)", fontSize: 11 }}
+                  tick={{ fill: "#94A3B8", fontSize: 11 }}
                   allowDecimals={false}
                   width={36}
                 />
                 <Tooltip
-                  cursor={{ stroke: "rgba(124,92,255,0.4)", strokeWidth: 1, strokeDasharray: "3 3" }}
+                  cursor={{ stroke: "rgba(168,85,247,0.4)", strokeWidth: 1, strokeDasharray: "3 3" }}
                   contentStyle={{
-                    background: "var(--popover)",
-                    border: "1px solid var(--border-strong)",
-                    borderRadius: 8,
-                    color: "var(--foreground)",
+                    background: "#141415",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    borderRadius: 10,
+                    color: "#F8FAFC",
                     fontSize: 12,
-                    boxShadow: "var(--shadow-md)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
                   }}
-                  labelStyle={{ color: "var(--subtle-foreground)", marginBottom: 4 }}
+                  labelStyle={{ color: "#94A3B8", marginBottom: 4 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="value"
-                  stroke="#7C5CFF"
-                  strokeWidth={1.75}
+                  stroke="url(#auraLine)"
+                  strokeWidth={2.5}
                   dot={false}
-                  activeDot={{ r: 4, stroke: "#0E0E11", strokeWidth: 2, fill: "#7C5CFF" }}
+                  activeDot={{ r: 4, stroke: "#141415", strokeWidth: 2, fill: "#A855F7" }}
                   fill="url(#dashAreaFill)"
                 />
               </AreaChart>
@@ -337,18 +331,15 @@ export default function Dashboard() {
               </TableHeader>
               <TableBody>
                 {latestSessions.map((s) => {
-                  const score = s.score ?? 0;
-                  const badgeCls =
-                    score >= 85 ? "badge-score-high" : score >= 60 ? "badge-score-mid" : "badge-score-low";
                   return (
                     <TableRow key={s.id}>
                       <TableCell>
-                        <span className={`aura-badge ${badgeCls}`}>{s.score ?? "—"}</span>
+                        <ScoreBadge score={s.score ?? 0} />
                       </TableCell>
-                      <TableCell className="tabular" style={{ color: "var(--muted-foreground)" }}>
+                      <TableCell className="tabular-nums" style={{ color: "#94A3B8" }}>
                         {s.last_seen_at ? new Date(s.last_seen_at).toLocaleString("pt-BR") : "—"}
                       </TableCell>
-                      <TableCell className="tabular" style={{ color: "var(--muted-foreground)" }}>
+                      <TableCell className="tabular-nums" style={{ color: "#94A3B8" }}>
                         {s.created_at ? new Date(s.created_at).toLocaleString("pt-BR") : "—"}
                       </TableCell>
                     </TableRow>
