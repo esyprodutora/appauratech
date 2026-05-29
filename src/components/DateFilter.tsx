@@ -66,8 +66,8 @@ export default function DateFilter({ value, onChange }: Props) {
   };
 
   return (
-    <div className="relative flex justify-end">
-      <div className="flex flex-wrap gap-2">
+    <div className="relative flex justify-start">
+      <div className="flex flex-wrap items-center gap-1">
         {OPTIONS.map((opt) => {
           const active = value.preset === opt.id;
           return (
@@ -76,12 +76,15 @@ export default function DateFilter({ value, onChange }: Props) {
               type="button"
               onClick={() => select(opt.id)}
               style={{
-                background: active ? "#2d1b69" : "#1a1a1a",
-                border: `1px solid ${active ? "#7c3aed" : "#2a2a2a"}`,
-                color: active ? "#ffffff" : "#a0a0a0",
-                borderRadius: 8,
-                padding: "6px 14px",
-                fontSize: 13,
+                background: "transparent",
+                border: "none",
+                borderBottom: active ? "2px solid #7c3aed" : "2px solid transparent",
+                color: active ? "#ffffff" : "#555",
+                borderRadius: 0,
+                padding: "4px 10px",
+                fontSize: 12,
+                fontWeight: active ? 600 : 500,
+                cursor: "pointer",
               }}
             >
               {opt.label}
@@ -91,7 +94,7 @@ export default function DateFilter({ value, onChange }: Props) {
       </div>
       {showPicker && (
         <div
-          className="absolute right-0 top-full z-20 mt-2 flex flex-col gap-3 p-4"
+          className="absolute left-0 top-full z-20 mt-2 flex flex-col gap-3 p-4"
           style={{ background: "#111111", border: "1px solid #2a2a2a", borderRadius: 12, minWidth: 280 }}
         >
           <label className="flex flex-col gap-1 text-xs" style={{ color: "#a0a0a0" }}>
