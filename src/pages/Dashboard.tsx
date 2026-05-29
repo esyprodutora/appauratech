@@ -194,87 +194,97 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div>
-        <h1 className="text-2xl font-bold">Visão Geral</h1>
-        <p className="text-muted-foreground">Métricas em tempo real do seu tráfego qualificado</p>
-      </div>
+      <header className="flex items-end justify-between gap-6">
+        <div>
+          <h1 className="aura-page-title">Visão Geral</h1>
+          <p className="aura-page-subtitle">
+            Métricas em tempo real do seu tráfego qualificado
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-[12px]" style={{ color: "var(--subtle-foreground)" }}>
+          <span className="aura-status-dot" /> Coletando ao vivo
+        </div>
+      </header>
 
-      <div className="mt-3">
+      <div className="mt-5 border-b" style={{ borderColor: "var(--border)" }}>
         <DateFilter value={range} onChange={setRange} />
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
-            <Card
-              key={metric.label}
-              style={{ background: "#111111", border: "1px solid #1e1e1e" }}
-            >
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle
-                  className="font-medium"
-                  style={{
-                    fontSize: "11px",
-                    color: "#555",
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {metric.label}
-                </CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div
-                  style={{
-                    fontSize: "36px",
-                    fontWeight: 700,
-                    color: metric.valueColor ?? "#ffffff",
-                    lineHeight: 1.1,
-                  }}
-                >
-                  {loading ? "—" : metric.value}
-                </div>
-              </CardContent>
-            </Card>
+            <div key={metric.label} className="metric-card">
+              <div className="flex items-center justify-between">
+                <span className="metric-label">{metric.label}</span>
+                <Icon className="h-3.5 w-3.5" style={{ color: "var(--subtle-foreground)" }} />
+              </div>
+              <div
+                className="metric-value mt-3"
+                style={metric.valueColor ? { color: metric.valueColor } : undefined}
+              >
+                {loading ? "—" : metric.value}
+              </div>
+            </div>
           );
         })}
       </div>
 
-      <Card className="mt-6" style={{ background: "#111111", border: "1px solid #1e1e1e" }}>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-white">
-            Sessões qualificadas — período selecionado
+      <Card className="mt-4">
+        <CardHeader className="pb-2">
+          <CardTitle
+            className="font-medium"
+            style={{ fontSize: 13, color: "var(--muted-foreground)", letterSpacing: "-0.005em" }}
+          >
+            Sessões qualificadas
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div style={{ width: "100%", height: 260 }}>
+          <div style={{ width: "100%", height: 280 }}>
             <ResponsiveContainer>
-              <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
                 <defs>
                   <linearGradient id="dashAreaFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.15} />
-                    <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#7C5CFF" stopOpacity={0.32} />
+                    <stop offset="100%" stopColor="#7C5CFF" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid horizontal vertical={false} stroke="#2a2a2a" />
-                <XAxis dataKey="date" stroke="#a0a0a0" fontSize={12} />
-                <YAxis stroke="#a0a0a0" fontSize={12} allowDecimals={false} />
+                <CartesianGrid
+                  horizontal
+                  vertical={false}
+                  stroke="rgba(255,255,255,0.05)"
+                />
+                <XAxis
+                  dataKey="date"
+                  stroke="transparent"
+                  tick={{ fill: "var(--subtle-foreground)", fontSize: 11 }}
+                  tickMargin={10}
+                />
+                <YAxis
+                  stroke="transparent"
+                  tick={{ fill: "var(--subtle-foreground)", fontSize: 11 }}
+                  allowDecimals={false}
+                  width={36}
+                />
                 <Tooltip
+                  cursor={{ stroke: "rgba(124,92,255,0.4)", strokeWidth: 1, strokeDasharray: "3 3" }}
                   contentStyle={{
-                    background: "#111111",
-                    border: "1px solid #2a2a2a",
+                    background: "var(--popover)",
+                    border: "1px solid var(--border-strong)",
                     borderRadius: 8,
-                    color: "#F8FAFC",
+                    color: "var(--foreground)",
+                    fontSize: 12,
+                    boxShadow: "var(--shadow-md)",
                   }}
+                  labelStyle={{ color: "var(--subtle-foreground)", marginBottom: 4 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="value"
-                  stroke="#7c3aed"
-                  strokeWidth={2}
+                  stroke="#7C5CFF"
+                  strokeWidth={1.75}
                   dot={false}
+                  activeDot={{ r: 4, stroke: "#0E0E11", strokeWidth: 2, fill: "#7C5CFF" }}
                   fill="url(#dashAreaFill)"
                 />
               </AreaChart>
@@ -283,18 +293,36 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      <Card className="mt-6" style={{ background: "#111111", border: "1px solid #1e1e1e" }}>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-white">
-            Últimas sessões qualificadas
-          </CardTitle>
+      <Card className="mt-4">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle
+              className="font-medium"
+              style={{ fontSize: 13, color: "var(--muted-foreground)", letterSpacing: "-0.005em" }}
+            >
+              Últimas sessões qualificadas
+            </CardTitle>
+            <span className="text-[11px]" style={{ color: "var(--subtle-foreground)" }}>
+              {latestSessions.length} sessões
+            </span>
+          </div>
         </CardHeader>
         <CardContent>
           {latestSessions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <Inbox className="h-10 w-10" style={{ color: "#a0a0a0" }} />
-              <p className="mt-3 text-sm font-medium text-white">Nenhuma sessão ainda</p>
-              <p className="mt-1 max-w-md text-xs" style={{ color: "#a0a0a0" }}>
+            <div className="flex flex-col items-center justify-center py-14 text-center">
+              <div
+                className="flex h-11 w-11 items-center justify-center rounded-xl"
+                style={{
+                  background: "rgba(124,92,255,0.08)",
+                  border: "1px solid rgba(124,92,255,0.18)",
+                }}
+              >
+                <Inbox className="h-5 w-5" style={{ color: "var(--primary-glow)" }} />
+              </div>
+              <p className="mt-4 text-[14px] font-medium" style={{ color: "var(--foreground)" }}>
+                Nenhuma sessão ainda
+              </p>
+              <p className="mt-1 max-w-md text-[12.5px]" style={{ color: "var(--muted-foreground)" }}>
                 Instale o script AURA no seu site para começar a capturar sessões qualificadas.
               </p>
             </div>
@@ -308,24 +336,24 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {latestSessions.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell
-                      style={{
-                        color: (s.score ?? 0) >= 85 ? "#10b981" : "#ffffff",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {s.score ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      {s.last_seen_at ? new Date(s.last_seen_at).toLocaleString("pt-BR") : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {s.created_at ? new Date(s.created_at).toLocaleString("pt-BR") : "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {latestSessions.map((s) => {
+                  const score = s.score ?? 0;
+                  const badgeCls =
+                    score >= 85 ? "badge-score-high" : score >= 60 ? "badge-score-mid" : "badge-score-low";
+                  return (
+                    <TableRow key={s.id}>
+                      <TableCell>
+                        <span className={`aura-badge ${badgeCls}`}>{s.score ?? "—"}</span>
+                      </TableCell>
+                      <TableCell className="tabular" style={{ color: "var(--muted-foreground)" }}>
+                        {s.last_seen_at ? new Date(s.last_seen_at).toLocaleString("pt-BR") : "—"}
+                      </TableCell>
+                      <TableCell className="tabular" style={{ color: "var(--muted-foreground)" }}>
+                        {s.created_at ? new Date(s.created_at).toLocaleString("pt-BR") : "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

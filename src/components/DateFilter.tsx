@@ -67,7 +67,7 @@ export default function DateFilter({ value, onChange }: Props) {
 
   return (
     <div className="relative flex justify-start">
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex flex-wrap items-center">
         {OPTIONS.map((opt) => {
           const active = value.preset === opt.id;
           return (
@@ -75,17 +75,8 @@ export default function DateFilter({ value, onChange }: Props) {
               key={opt.id}
               type="button"
               onClick={() => select(opt.id)}
-              style={{
-                background: "transparent",
-                border: "none",
-                borderBottom: active ? "2px solid #7c3aed" : "2px solid transparent",
-                color: active ? "#ffffff" : "#555",
-                borderRadius: 0,
-                padding: "4px 10px",
-                fontSize: 12,
-                fontWeight: active ? 600 : 500,
-                cursor: "pointer",
-              }}
+              className="aura-date-tab"
+              data-active={active}
             >
               {opt.label}
             </button>
@@ -95,7 +86,7 @@ export default function DateFilter({ value, onChange }: Props) {
       {showPicker && (
         <div
           className="absolute left-0 top-full z-20 mt-2 flex flex-col gap-3 p-4"
-          style={{ background: "#111111", border: "1px solid #2a2a2a", borderRadius: 12, minWidth: 280 }}
+          style={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12, minWidth: 280, boxShadow: "var(--shadow-md)" }}
         >
           <label className="flex flex-col gap-1 text-xs" style={{ color: "#a0a0a0" }}>
             De

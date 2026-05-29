@@ -11,12 +11,22 @@ import {
 import { Button } from "@/components/ui/button";
 import AuraLogo from "@/components/AuraLogo";
 
-const navItems = [
-  { label: "Visão Geral", path: "/", icon: Home },
-  { label: "Workspaces", path: "/workspaces", icon: Radio },
-  { label: "Instalação", path: "/install", icon: Code },
-  { label: "Planos", path: "/plans", icon: CreditCard },
-  { label: "Configurações", path: "/settings", icon: Settings },
+const navSections = [
+  {
+    label: "Workspace",
+    items: [
+      { label: "Visão Geral", path: "/", icon: Home },
+      { label: "Workspaces", path: "/workspaces", icon: Radio },
+      { label: "Instalação", path: "/install", icon: Code },
+    ],
+  },
+  {
+    label: "Conta",
+    items: [
+      { label: "Planos", path: "/plans", icon: CreditCard },
+      { label: "Configurações", path: "/settings", icon: Settings },
+    ],
+  },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -32,73 +42,96 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <aside
-        className="flex w-64 flex-col"
+        className="flex w-60 flex-col"
         style={{
-          background: "#0f0f0f",
-          borderRight: "1px solid #1e1e1e",
+          background: "var(--sidebar)",
+          borderRight: "1px solid var(--sidebar-border)",
         }}
       >
-        <div className="p-4">
-          <Link to="/" className="flex items-center">
+        <div className="px-4 pb-3 pt-5">
+          <Link to="/" className="flex items-center gap-2">
             <AuraLogo size={24} fontSize={22} />
           </Link>
         </div>
 
-        <nav className="flex-1 px-3 py-2">
-          <ul className="space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <li key={item.path}>
-                  <Link
-                    to={item.path}
-                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors"
-                    style={{
-                      background: isActive ? "#1a1040" : "transparent",
-                      color: isActive ? "#ffffff" : "#a0a0a0",
-                      borderLeft: isActive ? "3px solid #7c3aed" : "3px solid transparent",
-                      paddingLeft: isActive ? "9px" : "9px",
-                    }}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+        <nav className="flex-1 px-2.5 pb-3">
+          {navSections.map((section, idx) => (
+            <div key={section.label}>
+              <p
+                className="aura-nav-section"
+                style={idx === 0 ? { marginTop: "0.5rem" } : undefined}
+              >
+                {section.label}
+              </p>
+              <ul className="space-y-0.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive =
+                    item.path === "/"
+                      ? location.pathname === "/"
+                      : location.pathname.startsWith(item.path);
+                  return (
+                    <li key={item.path}>
+                      <Link
+                        to={item.path}
+                        className="aura-nav-item"
+                        data-active={isActive}
+                      >
+                        <Icon className="h-[15px] w-[15px]" />
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
 
-        <div className="p-3" style={{ borderTop: "1px solid #1e1e1e" }}>
-          <div className="mb-2 flex items-center gap-2 px-3 py-2">
+        <div
+          className="p-2.5"
+          style={{ borderTop: "1px solid var(--sidebar-border)" }}
+        >
+          <div
+            className="mb-1 flex items-center gap-2.5 rounded-md px-2 py-2"
+            style={{ background: "transparent" }}
+          >
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{ background: "linear-gradient(135deg,#6366F1,#A855F7)" }}
+              className="flex h-7 w-7 items-center justify-center rounded-md text-[11px] font-semibold text-white"
+              style={{ background: "var(--gradient-primary)" }}
             >
               {user?.email?.charAt(0).toUpperCase() ?? "U"}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium" style={{ color: "#F8FAFC" }}>
+              <p
+                className="truncate text-[12.5px] font-medium leading-tight"
+                style={{ color: "var(--foreground)" }}
+              >
                 {user?.email}
+              </p>
+              <p
+                className="truncate text-[11px] leading-tight"
+                style={{ color: "var(--subtle-foreground)" }}
+              >
+                Plano Starter
               </p>
             </div>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start hover:text-white"
-            style={{ color: "#666", padding: "12px 16px" }}
+            className="w-full justify-start text-[13px] font-medium hover:bg-white/5 hover:text-foreground"
+            style={{ color: "var(--subtle-foreground)" }}
             onClick={handleLogout}
           >
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut className="mr-2 h-[15px] w-[15px]" />
             Sair
           </Button>
         </div>
       </aside>
 
-      <main className="flex-1" style={{ background: "#0A0A0B" }}>
-        <div className="p-6">{children}</div>
+      <main className="flex-1" style={{ background: "var(--background)" }}>
+        <div className="mx-auto max-w-[1200px] px-8 py-8">{children}</div>
       </main>
     </div>
   );
