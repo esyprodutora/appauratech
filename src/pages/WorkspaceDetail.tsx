@@ -33,11 +33,9 @@ interface Workspace {
   id: string;
   name: string;
   domain: string;
-  token: string | null;
+  public_token: string | null;
   template: string | null;
-  status: string;
   created_at: string;
-  user_id: string;
 }
 
 type PlatformId = "meta" | "tiktok" | "google_ads" | "kwai";
@@ -52,15 +50,15 @@ const CDN_URL = "https://iynykpijbctbyhoaiyen.supabase.co/storage/v1/object/publ
 
 interface CapiCred {
   pixel_id: string;
-  access_token: string;
-  active: boolean;
+  vault_secret_id: string;
+  is_active: boolean;
   showToken: boolean;
   loading: boolean;
 }
 const emptyCred = (): CapiCred => ({
   pixel_id: "",
-  access_token: "",
-  active: false,
+  vault_secret_id: "",
+  is_active: false,
   showToken: false,
   loading: false,
 });
@@ -100,17 +98,17 @@ export default function WorkspaceDetail() {
           .from("active_sessions")
           .select("*")
           .eq("workspace_id", workspace.id)
-          .order("created_at", { ascending: false })
+          .order("last_seen_at", { ascending: false })
           .limit(50),
         supabase
           .from("capi_events_log")
           .select("*")
           .eq("workspace_id", workspace.id)
-          .order("created_at", { ascending: false })
+          .order("sent_at", { ascending: false })
           .limit(50),
         supabase
           .from("capi_credentials")
-          .select("platform, pixel_id, access_token, active")
+          .select("platform, pixel_id, vault_secret_id, is_active")
           .eq("workspace_id", workspace.id),
       ]);
       setSessions(sessRes.data ?? []);
@@ -124,7 +122,7 @@ export default function WorkspaceDetail() {
         days[d.toISOString().slice(0, 10)] = 0;
       }
       for (const s of sessRes.data ?? []) {
-        const k = (s.created_at ?? "").slice(0, 10);
+        const k = (s.last_seen_at ?? s.created_at ?? "").slice(0, 10);
         if (k in days) days[k]++;
       }
       setChartData(
@@ -137,13 +135,13 @@ export default function WorkspaceDetail() {
       if (credsRes.data) {
         setCreds((prev) => {
           const next = { ...prev };
-          for (const row of credsRes.data as Array<{ platform: PlatformId; pixel_id: string; access_token: string; active: boolean }>) {
+          for (const row of credsRes.data as Array<{ platform: PlatformId; pixel_id: string; vault_secret_id: string; is_active: boolean }>) {
             if (next[row.platform]) {
               next[row.platform] = {
                 ...next[row.platform],
                 pixel_id: row.pixel_id ?? "",
-                access_token: row.access_token ?? "",
-                active: !!row.active,
+                vault_secret_id: row.vault_secret_id ?? "",
+                is_active: !!row.is_active,
               };
             }
           }
@@ -163,7 +161,7 @@ export default function WorkspaceDetail() {
   }, [sessions]);
 
   const scriptCode = workspace
-    ? `<script\n  src="${CDN_URL}?token=${workspace.token ?? ""}"\n  data-template="${workspace.template ?? ""}"\n  async>\n</script>`
+    ? `<script\n  src="${CDN_URL}?token=${workspace.public_token ?? ""}"\n  data-template="${workspace.template ?? ""}"\n  async>\n</script>`
     : "";
 
   const copyScript = () => {
@@ -183,11 +181,10 @@ export default function WorkspaceDetail() {
     const { error } = await supabase.from("capi_credentials").upsert(
       {
         workspace_id: workspace.id,
-        user_id: workspace.user_id,
         platform: p,
         pixel_id: c.pixel_id,
-        access_token: c.access_token,
-        active: c.active,
+        vault_secret_id: c.vault_secret_id,
+        is_active: c.is_active,
       },
       { onConflict: "workspace_id,platform" }
     );
