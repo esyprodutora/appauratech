@@ -197,21 +197,15 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <header className="flex items-end justify-between gap-6">
+      <header className="flex items-start justify-between gap-6">
         <div>
           <h1 className="aura-page-title">Visão Geral</h1>
           <p className="aura-page-subtitle">
             Métricas em tempo real do seu tráfego qualificado
           </p>
         </div>
-        <div className="flex items-center gap-2 text-[12px]" style={{ color: "var(--subtle-foreground)" }}>
-          <span className="aura-status-dot" /> Coletando ao vivo
-        </div>
-      </header>
-
-      <div className="mt-5 border-b" style={{ borderColor: "var(--border)" }}>
         <DateFilter value={range} onChange={setRange} />
-      </div>
+      </header>
 
       <div className="mt-6 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         {metrics.map((metric) => (
