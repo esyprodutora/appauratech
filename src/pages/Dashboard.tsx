@@ -155,6 +155,8 @@ export default function Dashboard() {
     }
   }
 
+  const chartData = useMemo(() => buildChart(sessions, range), [sessions, range]);
+
   if (authLoading) {
     return (
       <Layout>
@@ -192,8 +194,6 @@ export default function Dashboard() {
       accent: "success",
     },
   ];
-
-  const chartData = useMemo(() => buildChart(sessions, range), [sessions, range]);
 
   return (
     <Layout>
