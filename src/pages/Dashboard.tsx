@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { ensureOrganization } from "@/lib/org";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, Users, MousePointerClick, Eye, Briefcase, Inbox } from "lucide-react";
@@ -42,13 +43,29 @@ export default function Dashboard() {
 
   async function fetchMetrics() {
     setLoading(true);
-    const [wsResult, evResult] = await Promise.all([
-      supabase.from("workspaces").select("id", { count: "exact", head: true }).eq("user_id", user?.id),
-      supabase.from("events").select("id", { count: "exact", head: true }).eq("user_id", user?.id),
-    ]);
-    setWorkspacesCount(wsResult.count ?? 0);
-    setEventsCount(evResult.count ?? 0);
-    setLoading(false);
+    try {
+      if (!user) return;
+      const org = await ensureOrganization(user);
+      const { data: wsRows } = await supabase
+        .from("workspaces")
+        .select("id")
+        .eq("org_id", org.id);
+      const workspaceIds = (wsRows ?? []).map((w) => w.id as string);
+      setWorkspacesCount(workspaceIds.length);
+
+      if (workspaceIds.length === 0) {
+        setEventsCount(0);
+        return;
+      }
+
+      const { count } = await supabase
+        .from("capi_events_log")
+        .select("id", { count: "exact", head: true })
+        .in("workspace_id", workspaceIds);
+      setEventsCount(count ?? 0);
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (authLoading) {
