@@ -224,7 +224,7 @@ export default function WorkspaceDetail() {
 
   const totalSessions = sessions.length;
   const totalEvents = events.length;
-  const successEvents = events.filter((e) => e.status === "success" || e.status === "ok").length;
+  const successEvents = events.filter((e) => e.success === true).length;
   const successRate = totalEvents ? Math.round((successEvents / totalEvents) * 100) : 0;
 
   return (
@@ -313,7 +313,7 @@ export default function WorkspaceDetail() {
                       <TableCell className="font-mono text-xs">{String(s.id).slice(0, 8)}</TableCell>
                       <TableCell>{s.platform ?? s.source ?? "—"}</TableCell>
                       <TableCell className="truncate max-w-xs">{s.url ?? s.page ?? "—"}</TableCell>
-                      <TableCell>{s.created_at ? new Date(s.created_at).toLocaleString("pt-BR") : "—"}</TableCell>
+                      <TableCell>{s.last_seen_at ? new Date(s.last_seen_at).toLocaleString("pt-BR") : "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -367,7 +367,7 @@ export default function WorkspaceDetail() {
                     </TableRow>
                   )}
                   {events.map((e) => {
-                    const ok = e.status === "success" || e.status === "ok";
+                    const ok = e.success === true;
                     return (
                       <TableRow key={e.id}>
                         <TableCell>{e.event_name ?? e.type ?? "—"}</TableCell>
@@ -376,10 +376,10 @@ export default function WorkspaceDetail() {
                         </TableCell>
                         <TableCell>
                           <Badge className={ok ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-red-500/20 text-red-300 border-red-500/30"}>
-                            {e.status ?? "—"}
+                            {ok ? "success" : "failed"}
                           </Badge>
                         </TableCell>
-                        <TableCell>{e.created_at ? new Date(e.created_at).toLocaleString("pt-BR") : "—"}</TableCell>
+                        <TableCell>{e.sent_at ? new Date(e.sent_at).toLocaleString("pt-BR") : "—"}</TableCell>
                       </TableRow>
                     );
                   })}
