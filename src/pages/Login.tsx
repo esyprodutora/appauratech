@@ -79,7 +79,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-11 rounded-lg border-white/10 bg-[#1C1C1E] text-white placeholder:text-white/30"
+              className="min-h-[48px] rounded-lg border-white/10 bg-[#1C1C1E] px-4 py-3 text-white placeholder:text-white/30"
             />
           </div>
           <div className="space-y-2">
@@ -93,7 +93,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-11 rounded-lg border-white/10 bg-[#1C1C1E] pr-10 text-white"
+                className="min-h-[48px] rounded-lg border-white/10 bg-[#1C1C1E] px-4 py-3 pr-10 text-white"
               />
               <button
                 type="button"
