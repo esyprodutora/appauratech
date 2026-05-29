@@ -81,25 +81,32 @@ export default function Workspaces() {
 
   return (
     <Layout>
-      <div className="flex items-center justify-between">
+      <header className="flex items-end justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold">Seus Workspaces</h1>
-          <p className="text-muted-foreground">Cada site monitorado é um workspace</p>
+          <h1 className="aura-page-title">Workspaces</h1>
+          <p className="aura-page-subtitle">Cada site monitorado é um workspace.</p>
         </div>
-        <Button onClick={() => navigate("/workspaces/new")}>
+        <Button onClick={() => navigate("/workspaces/new")} className="bg-primary">
           <Plus className="mr-2 h-4 w-4" />
           Novo Workspace
         </Button>
-      </div>
+      </header>
 
       {workspaces.length === 0 ? (
         <div
-          className="mt-12 flex flex-col items-center justify-center rounded-xl p-12 text-center"
-          style={{ background: "#111111", border: "1px solid #2a2a2a" }}
+          className="mt-10 flex flex-col items-center justify-center rounded-xl p-14 text-center"
+          style={{ background: "var(--card)", border: "1px solid var(--border)" }}
         >
-          <Radio className="h-12 w-12" style={{ color: "#a0a0a0" }} />
-          <h3 className="mt-4 text-lg font-semibold text-white">Nenhum workspace ainda</h3>
-          <p className="mt-1 max-w-md text-sm" style={{ color: "#a0a0a0" }}>
+          <div
+            className="flex h-12 w-12 items-center justify-center rounded-xl"
+            style={{ background: "rgba(124,92,255,0.08)", border: "1px solid rgba(124,92,255,0.18)" }}
+          >
+            <Radio className="h-5 w-5" style={{ color: "var(--primary-glow)" }} />
+          </div>
+          <h3 className="mt-4 text-[15px] font-semibold" style={{ color: "var(--foreground)" }}>
+            Nenhum workspace ainda
+          </h3>
+          <p className="mt-1 max-w-md text-[13px]" style={{ color: "var(--muted-foreground)" }}>
             Crie seu primeiro workspace para começar a qualificar tráfego.
           </p>
           <Button className="btn-gradient mt-6 text-white" onClick={() => navigate("/workspaces/new")}>
@@ -108,7 +115,7 @@ export default function Workspaces() {
           </Button>
         </div>
       ) : (
-        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {workspaces.map((ws) => {
             const tpl = (ws.template && TEMPLATE_LABEL[ws.template]) || {
               label: ws.template ?? "Geral",
@@ -119,64 +126,70 @@ export default function Workspaces() {
               <div
                 key={ws.id}
                 onClick={() => navigate(`/workspaces/${ws.id}`)}
-                className="group cursor-pointer transition-all duration-200"
-                style={{
-                  background: "#111111",
-                  border: "1px solid #2a2a2a",
-                  borderRadius: 12,
-                  padding: 24,
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#7c3aed")}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#2a2a2a")}
+                className="aura-workspace-card group"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <h3 style={{ fontSize: 18, fontWeight: 700, color: "#ffffff" }}>
-                    {ws.name}
-                  </h3>
-                  <span
-                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                    style={{ background: "#052e16", color: "#10b981" }}
-                  >
+                  <div className="min-w-0">
+                    <h3
+                      className="truncate"
+                      style={{ fontSize: 15, fontWeight: 600, color: "var(--foreground)", letterSpacing: "-0.01em" }}
+                    >
+                      {ws.name}
+                    </h3>
+                    <p
+                      className="mt-0.5 truncate"
+                      style={{ color: "var(--subtle-foreground)", fontSize: 12.5 }}
+                    >
+                      {ws.domain}
+                    </p>
+                  </div>
+                  <span className="aura-badge badge-score-high shrink-0">
+                    <span className="aura-status-dot" />
                     ativo
                   </span>
                 </div>
 
-                <p className="mt-2" style={{ color: "#a0a0a0", fontSize: 14 }}>
-                  {ws.domain}
-                </p>
+                <div
+                  className="my-4 grid grid-cols-2 gap-3 rounded-lg p-3"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}
+                >
+                  <div>
+                    <p className="metric-label" style={{ fontSize: 10.5 }}>Sessões 7d</p>
+                    <p
+                      className="tabular mt-1"
+                      style={{ fontSize: 18, fontWeight: 600, color: "var(--foreground)", letterSpacing: "-0.02em" }}
+                    >
+                      {(ws.sessions7d ?? 0).toLocaleString("pt-BR")}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="metric-label" style={{ fontSize: 10.5 }}>Score de corte</p>
+                    <p
+                      className="tabular mt-1"
+                      style={{ fontSize: 18, fontWeight: 600, color: "var(--foreground)", letterSpacing: "-0.02em" }}
+                    >
+                      {ws.score_cutoff ?? 60}
+                    </p>
+                  </div>
+                </div>
 
-                <div className="mt-4 flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
                   <span
-                    className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium"
-                    style={{ background: tpl.bg, color: tpl.color }}
+                    className="aura-badge"
+                    style={{ background: tpl.bg, color: tpl.color, borderColor: "transparent" }}
                   >
                     {tpl.label}
                   </span>
-                  <span style={{ color: "#a0a0a0", fontSize: 12 }}>
-                    Score: {ws.score_cutoff ?? 60}
-                  </span>
+                  <Link
+                    to={`/workspaces/${ws.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 text-[12.5px] font-medium transition-colors group-hover:gap-1.5"
+                    style={{ color: "var(--primary-glow)" }}
+                  >
+                    Ver workspace
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
                 </div>
-
-                <div className="mt-3 flex flex-col gap-1" style={{ color: "#a0a0a0", fontSize: 12 }}>
-                  <span>{(ws.sessions7d ?? 0).toLocaleString("pt-BR")} sessões esta semana</span>
-                  <span>
-                    Criado em {new Date(ws.created_at).toLocaleDateString("pt-BR")}
-                  </span>
-                </div>
-
-                <Link
-                  to={`/workspaces/${ws.id}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="mt-5 flex items-center justify-center gap-2 rounded-md text-sm font-medium text-white transition-all"
-                  style={{
-                    height: 40,
-                    width: "100%",
-                    background: "linear-gradient(135deg, #7c3aed 0%, #9f67f5 100%)",
-                  }}
-                >
-                  Ver workspace
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
               </div>
             );
           })}
