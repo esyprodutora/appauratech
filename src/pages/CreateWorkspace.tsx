@@ -6,78 +6,210 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+
+type TemplateId = "vsl" | "ecommerce" | "leads" | "local";
+
+const TEMPLATES: Array<{ id: TemplateId; title: string; subtitle: string }> = [
+  { id: "vsl", title: "VSL / Infoproduto", subtitle: "Páginas de venda longas" },
+  { id: "ecommerce", title: "E-commerce", subtitle: "Loja virtual" },
+  { id: "leads", title: "Captura de Leads / Quiz", subtitle: "Funis de leads" },
+  { id: "local", title: "Negócio Local / WhatsApp", subtitle: "Conversão por mensagem" },
+];
+
+function scoreLabel(s: number) {
+  if (s < 60) return "Agressivo";
+  if (s < 75) return "Equilibrado — recomendado";
+  return "Conservador";
+}
+
+function sanitizeDomain(raw: string) {
+  return raw.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
+}
+
+function genToken() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID().replace(/-/g, "");
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
 
 export default function CreateWorkspace() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [domain, setDomain] = useState("");
+  const [template, setTemplate] = useState<TemplateId>("vsl");
+  const [score, setScore] = useState(60);
+  const [autopilot, setAutopilot] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      toast.error("Você precisa estar logado");
-      return;
-    }
+    if (!user) return toast.error("Você precisa estar logado");
+    const cleanDomain = sanitizeDomain(domain);
+    if (!cleanDomain) return toast.error("Informe um domínio válido");
+
     setIsLoading(true);
-    const { error } = await supabase.from("workspaces").insert({
-      user_id: user.id,
-      name,
-      domain,
-      status: "active",
-    });
-    setIsLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Workspace criado com sucesso!");
-      navigate("/workspaces");
+    try {
+      // Ensure organization
+      const { data: existingOrg } = await supabase
+        .from("organizations")
+        .select("id")
+        .eq("owner_id", user.id)
+        .maybeSingle();
+
+      let orgId = existingOrg?.id as string | undefined;
+      if (!orgId) {
+        const { data: newOrg, error: orgErr } = await supabase
+          .from("organizations")
+          .insert({ owner_id: user.id, name: user.email ?? "Minha Organização" })
+          .select("id")
+          .single();
+        if (orgErr) throw orgErr;
+        orgId = newOrg.id;
+      }
+
+      const token = genToken();
+      const { data: ws, error } = await supabase
+        .from("workspaces")
+        .insert({
+          user_id: user.id,
+          organization_id: orgId,
+          name,
+          domain: cleanDomain,
+          template,
+          score_cutoff: score,
+          autopilot,
+          token,
+          status: "active",
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      toast.success("Workspace criado!");
+      navigate(`/install?workspace=${ws.id}`);
+    } catch (err) {
+      const m = err instanceof Error ? err.message : "Erro ao criar workspace";
+      toast.error(m);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold">Novo Workspace</h1>
-      <Card className="mt-6 max-w-lg">
-        <CardHeader>
-          <CardTitle>Informações do Workspace</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <h1 className="text-2xl font-bold text-white">Novo Workspace</h1>
+      <form onSubmit={handleSubmit} className="mt-6 max-w-2xl space-y-6">
+        <Card className="bg-[#141415] border-white/10">
+          <CardHeader>
+            <CardTitle className="text-white">Informações</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="name" className="text-[#94A3B8]">Nome do workspace</Label>
               <Input
                 id="name"
                 placeholder="Meu Workspace"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                className="bg-[#1C1C1E] border-white/10 text-white"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="domain">Domínio</Label>
+              <Label htmlFor="domain" className="text-[#94A3B8]">Domínio (sem https, sem www)</Label>
               <Input
                 id="domain"
-                placeholder="https://meusite.com"
+                placeholder="meusite.com"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 required
+                className="bg-[#1C1C1E] border-white/10 text-white"
               />
             </div>
-            <div className="flex gap-2">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Criando..." : "Criar Workspace"}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => navigate("/workspaces")}>
-                Cancelar
-              </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[#141415] border-white/10">
+          <CardHeader>
+            <CardTitle className="text-white">Template</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-2">
+              {TEMPLATES.map((t) => {
+                const selected = t.id === template;
+                return (
+                  <button
+                    type="button"
+                    key={t.id}
+                    onClick={() => setTemplate(t.id)}
+                    className={`rounded-lg p-4 text-left transition-colors ${
+                      selected
+                        ? "bg-[#1C1C1E] border-2 border-[#6366F1]"
+                        : "bg-[#1C1C1E] border border-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <p className="font-medium text-white">{t.title}</p>
+                    <p className="mt-1 text-xs text-[#94A3B8]">{t.subtitle}</p>
+                  </button>
+                );
+              })}
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[#141415] border-white/10">
+          <CardHeader>
+            <CardTitle className="text-white">Score de corte</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-bold text-white">{score}</span>
+              <span className="text-sm text-[#94A3B8]">{scoreLabel(score)}</span>
+            </div>
+            <Slider
+              min={40}
+              max={90}
+              step={1}
+              value={[score]}
+              onValueChange={(v) => setScore(v[0])}
+            />
+            <div className="flex justify-between text-xs text-[#94A3B8]">
+              <span>40</span>
+              <span>90</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[#141415] border-white/10">
+          <CardContent className="flex items-center justify-between pt-6">
+            <div>
+              <p className="font-medium text-white">Autopilot</p>
+              <p className="text-xs text-[#94A3B8]">
+                Otimização automática com base no score de corte.
+              </p>
+            </div>
+            <Switch checked={autopilot} onCheckedChange={setAutopilot} />
+          </CardContent>
+        </Card>
+
+        <div className="flex gap-2">
+          <Button type="submit" disabled={isLoading} className="btn-gradient text-white">
+            {isLoading ? "Criando..." : "Criar Workspace"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/workspaces")}
+            className="bg-[#1C1C1E] border-white/10 text-white hover:bg-[#26262a]"
+          >
+            Cancelar
+          </Button>
+        </div>
+      </form>
     </Layout>
   );
 }
