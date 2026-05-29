@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { ensureOrganization } from "@/lib/org";
 import { Button } from "@/components/ui/button";
 import { Plus, ExternalLink, Radio } from "lucide-react";
 
@@ -10,7 +11,6 @@ interface Workspace {
   id: string;
   name: string;
   domain: string;
-  status: string;
   created_at: string;
 }
 
@@ -31,15 +31,18 @@ export default function Workspaces() {
 
   async function fetchWorkspaces() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("workspaces")
-      .select("*")
-      .eq("user_id", user?.id)
-      .order("created_at", { ascending: false });
-    if (!error && data) {
-      setWorkspaces(data as Workspace[]);
+    try {
+      if (!user) return;
+      const org = await ensureOrganization(user);
+      const { data, error } = await supabase
+        .from("workspaces")
+        .select("id, name, domain, created_at")
+        .eq("org_id", org.id)
+        .order("created_at", { ascending: false });
+      if (!error && data) setWorkspaces(data as Workspace[]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   if (authLoading || loading) {
@@ -92,14 +95,8 @@ export default function Workspaces() {
                   <h3 className="font-semibold">{ws.name}</h3>
                   <p className="text-sm text-muted-foreground">{ws.domain}</p>
                 </div>
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                    ws.status === "active"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {ws.status}
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                  ativo
                 </span>
               </div>
               <div className="mt-4 flex items-center gap-2">
