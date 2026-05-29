@@ -54,11 +54,18 @@ interface Workspace {
 }
 
 type PlatformId = "meta" | "tiktok" | "google_ads" | "kwai";
-const PLATFORMS: Array<{ id: PlatformId; name: string; badgeKey: string }> = [
-  { id: "meta", name: "Meta", badgeKey: "meta" },
-  { id: "tiktok", name: "TikTok", badgeKey: "tiktok" },
-  { id: "google_ads", name: "Google Ads", badgeKey: "google" },
-  { id: "kwai", name: "Kwai for Business", badgeKey: "kwai" },
+
+const PLATFORMS: Array<{
+  id: PlatformId;
+  name: string;
+  badgeKey: string;
+  pixelLabel: string;
+  tokenLabel: string;
+}> = [
+  { id: "meta", name: "Meta", badgeKey: "meta", pixelLabel: "Pixel ID", tokenLabel: "Token de Acesso" },
+  { id: "tiktok", name: "TikTok", badgeKey: "tiktok", pixelLabel: "Pixel ID", tokenLabel: "Access Token" },
+  { id: "google_ads", name: "Google Ads", badgeKey: "google", pixelLabel: "Tag ID", tokenLabel: "API Secret" },
+  { id: "kwai", name: "Kwai for Business", badgeKey: "kwai", pixelLabel: "Pixel ID", tokenLabel: "Access Token" },
 ];
 
 interface CapiCred {
@@ -130,7 +137,12 @@ export default function WorkspaceDetail() {
       if (credsRes.data) {
         setCreds((prev) => {
           const next = { ...prev };
-          for (const row of credsRes.data as Array<{ platform: PlatformId; pixel_id: string; vault_secret_id: string; is_active: boolean }>) {
+          for (const row of credsRes.data as Array<{
+            platform: PlatformId;
+            pixel_id: string;
+            vault_secret_id: string;
+            is_active: boolean;
+          }>) {
             if (next[row.platform]) {
               next[row.platform] = {
                 ...next[row.platform],
@@ -146,12 +158,11 @@ export default function WorkspaceDetail() {
     })();
   }, [workspace]);
 
-  // Metrics — today
   const todayStart = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d.getTime();
-  }, [workspace?.id, sessions.length, events.length]);
+  }, []);
 
   const sessionsToday = useMemo(
     () => sessions.filter((s) => new Date(s.created_at ?? s.last_seen_at ?? 0).getTime() >= todayStart),
@@ -170,7 +181,6 @@ export default function WorkspaceDetail() {
     [sessionsToday]
   );
 
-  // Chart — last 7 days
   const chartData = useMemo(() => {
     const buckets = new Map<string, number>();
     const cur = new Date();
@@ -301,7 +311,6 @@ export default function WorkspaceDetail() {
           <TabsTrigger value="settings">Configurações</TabsTrigger>
         </TabsList>
 
-        {/* === Visão Geral === */}
         <TabsContent value="overview" className="mt-4 space-y-4">
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             <MetricCard label="SESSÕES HOJE" value={sessionsToday.length.toLocaleString("pt-BR")} icon={Briefcase} />
@@ -312,7 +321,7 @@ export default function WorkspaceDetail() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[13px] font-medium" style={{ color: "var(--muted-foreground)" }}>
+              <CardTitle className="text-[13px] font-medium text-[#94A3B8]">
                 Sessões últimos 7 dias
               </CardTitle>
             </CardHeader>
@@ -334,7 +343,6 @@ export default function WorkspaceDetail() {
                     <XAxis dataKey="date" stroke="transparent" tick={{ fill: "#94A3B8", fontSize: 11 }} tickMargin={10} />
                     <YAxis stroke="transparent" tick={{ fill: "#94A3B8", fontSize: 11 }} allowDecimals={false} width={36} />
                     <Tooltip
-                      cursor={{ stroke: "rgba(168,85,247,0.4)", strokeWidth: 1, strokeDasharray: "3 3" }}
                       contentStyle={{
                         background: "#141415",
                         border: "1px solid rgba(255,255,255,0.10)",
@@ -343,14 +351,7 @@ export default function WorkspaceDetail() {
                         fontSize: 12,
                       }}
                     />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="url(#wsAuraLine)"
-                      strokeWidth={2.5}
-                      dot={false}
-                      fill="url(#wsAreaFill)"
-                    />
+                    <Area type="monotone" dataKey="value" stroke="url(#wsAuraLine)" strokeWidth={2.5} dot={false} fill="url(#wsAreaFill)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -358,13 +359,10 @@ export default function WorkspaceDetail() {
           </Card>
         </TabsContent>
 
-        {/* === Sessões === */}
         <TabsContent value="sessions" className="mt-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[13px] font-medium" style={{ color: "var(--muted-foreground)" }}>
-                Últimas sessões
-              </CardTitle>
+              <CardTitle className="text-[13px] font-medium text-[#94A3B8]">Últimas sessões</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -392,18 +390,12 @@ export default function WorkspaceDetail() {
                         <TableCell><ScoreBadge score={Number(s.score) || 0} /></TableCell>
                         <TableCell><TemplateBadge template={s.template || workspace.template || ""} /></TableCell>
                         <TableCell><PlatformBadge platform={s.platform || s.source || ""} /></TableCell>
-                        <TableCell className="tabular-nums" style={{ color: "#94A3B8" }}>
+                        <TableCell className="tabular-nums text-[#94A3B8]">
                           {s.last_seen_at ? new Date(s.last_seen_at).toLocaleString("pt-BR") : "—"}
                         </TableCell>
                         <TableCell>
-                          <span
-                            className="inline-flex items-center gap-1.5 text-xs"
-                            style={{ color: isActive ? "#10B981" : "#94A3B8" }}
-                          >
-                            <span
-                              className="inline-block h-1.5 w-1.5 rounded-full"
-                              style={{ background: isActive ? "#10B981" : "#94A3B8" }}
-                            />
+                          <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: isActive ? "#10B981" : "#94A3B8" }}>
+                            <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: isActive ? "#10B981" : "#94A3B8" }} />
                             {isActive ? "Ativo" : "Encerrado"}
                           </span>
                         </TableCell>
@@ -416,13 +408,10 @@ export default function WorkspaceDetail() {
           </Card>
         </TabsContent>
 
-        {/* === Eventos CAPI === */}
         <TabsContent value="capi" className="mt-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[13px] font-medium" style={{ color: "var(--muted-foreground)" }}>
-                Eventos enviados
-              </CardTitle>
+              <CardTitle className="text-[13px] font-medium text-[#94A3B8]">Eventos enviados</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -450,7 +439,7 @@ export default function WorkspaceDetail() {
                       <TableRow key={e.id}>
                         <TableCell className="text-white">{e.event_name ?? e.type ?? "—"}</TableCell>
                         <TableCell><PlatformBadge platform={e.platform ?? ""} /></TableCell>
-                        <TableCell>{typeof e.score === "number" ? <ScoreBadge score={Number(e.score)} /> : <span style={{ color: "#94A3B8" }}>—</span>}</TableCell>
+                        <TableCell>{typeof e.score === "number" ? <ScoreBadge score={Number(e.score)} /> : <span className="text-[#94A3B8]">—</span>}</TableCell>
                         <TableCell>
                           <span
                             className="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs"
@@ -462,10 +451,10 @@ export default function WorkspaceDetail() {
                             {ok ? "✓" : "✗"}
                           </span>
                         </TableCell>
-                        <TableCell className="font-mono text-xs" style={{ color: "#94A3B8" }}>
+                        <TableCell className="font-mono text-xs text-[#94A3B8]">
                           {e.response_code ?? e.status_code ?? "—"}
                         </TableCell>
-                        <TableCell className="tabular-nums" style={{ color: "#94A3B8" }}>
+                        <TableCell className="tabular-nums text-[#94A3B8]">
                           {e.sent_at ? new Date(e.sent_at).toLocaleString("pt-BR") : "—"}
                         </TableCell>
                       </TableRow>
@@ -477,7 +466,6 @@ export default function WorkspaceDetail() {
           </Card>
         </TabsContent>
 
-        {/* === Configurações === */}
         <TabsContent value="settings" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
@@ -485,15 +473,8 @@ export default function WorkspaceDetail() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Input
-                  readOnly
-                  value={publicToken}
-                  className="bg-[#1C1C1E] border-white/10 text-white font-mono text-sm"
-                />
-                <Button
-                  onClick={copyToken}
-                  className="bg-[#1C1C1E] border border-white/10 text-white hover:bg-[#26262a]"
-                >
+                <Input readOnly value={publicToken} className="bg-[#1C1C1E] border-white/10 text-white font-mono text-sm" />
+                <Button onClick={copyToken} className="bg-[#1C1C1E] border border-white/10 text-white hover:bg-[#26262a]">
                   {copiedToken ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
@@ -526,11 +507,7 @@ export default function WorkspaceDetail() {
                   <p className="text-white text-sm font-medium">Autopilot</p>
                   <p className="text-xs text-[#94A3B8]">Envia eventos automaticamente quando score ≥ corte</p>
                 </div>
-                <Switch
-                  checked={!!workspace.autopilot}
-                  disabled={savingAutopilot}
-                  onCheckedChange={toggleAutopilot}
-                />
+                <Switch checked={!!workspace.autopilot} disabled={savingAutopilot} onCheckedChange={toggleAutopilot} />
               </div>
               <div>
                 <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Status</p>
@@ -551,13 +528,11 @@ export default function WorkspaceDetail() {
                         <PlatformBadge platform={p.badgeKey} />
                         <CardTitle className="text-white text-base">{p.name}</CardTitle>
                       </div>
-                      {c.is_active && (
-                        <span className="text-xs text-[#10B981]">Configurado</span>
-                      )}
+                      {c.is_active && <span className="text-xs text-[#10B981]">Configurado</span>}
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="space-y-2">
-                        <Label className="text-[#94A3B8] text-xs">Pixel ID</Label>
+                        <Label className="text-[#94A3B8] text-xs">{p.pixelLabel}</Label>
                         <Input
                           value={c.pixel_id}
                           onChange={(e) => updateCred(p.id, { pixel_id: e.target.value })}
@@ -565,7 +540,7 @@ export default function WorkspaceDetail() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-[#94A3B8] text-xs">Token de Acesso</Label>
+                        <Label className="text-[#94A3B8] text-xs">{p.tokenLabel}</Label>
                         <Input
                           type={c.showToken ? "text" : "password"}
                           value={c.vault_secret_id}
@@ -580,11 +555,7 @@ export default function WorkspaceDetail() {
                           {c.showToken ? "Ocultar" : "Mostrar"}
                         </button>
                       </div>
-                      <Button
-                        onClick={() => saveCred(p.id)}
-                        disabled={c.loading}
-                        className="bg-primary text-white w-full"
-                      >
+                      <Button onClick={() => saveCred(p.id)} disabled={c.loading} className="bg-primary text-white w-full">
                         {c.loading ? "Salvando..." : "Salvar"}
                       </Button>
                     </CardContent>
@@ -600,8 +571,7 @@ export default function WorkspaceDetail() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-[#94A3B8] mb-3">
-                A exclusão é permanente. Todos os dados associados (sessões, eventos, credenciais)
-                serão removidos.
+                A exclusão é permanente. Todos os dados associados serão removidos.
               </p>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -619,10 +589,7 @@ export default function WorkspaceDetail() {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={deleteWorkspace}
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                    >
+                    <AlertDialogAction onClick={deleteWorkspace} className="bg-red-600 hover:bg-red-700 text-white">
                       Excluir
                     </AlertDialogAction>
                   </AlertDialogFooter>
