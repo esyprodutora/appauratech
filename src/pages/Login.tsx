@@ -142,7 +142,16 @@ export default function Login() {
 
         <p className="mt-6 text-center text-sm" style={{ color: "#94A3B8" }}>
           Não tem conta?{" "}
-          <Link to="/register" style={{ color: "#6366F1" }} className="font-medium hover:underline">
+          <Link
+            to="/register"
+            className="font-medium hover:underline"
+            style={{
+              background: "linear-gradient(90deg, #7c3aed, #ec4899)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
             Criar conta grátis
           </Link>
         </p>
