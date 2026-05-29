@@ -23,9 +23,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) return;
+    if (!user) {
+      navigate("/login", { replace: true });
+      return;
+    }
     fetchMetrics();
-  }, [user, authLoading]);
+  }, [user, authLoading, navigate]);
 
   async function fetchMetrics() {
     setLoading(true);
