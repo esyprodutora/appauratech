@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
-  Briefcase,
+  Radio,
   Code2,
   CreditCard,
   Settings,
@@ -10,12 +10,12 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import AuraLogo from "@/components/AuraLogo";
 
 const navItems = [
-  { label: "Dashboard", path: "/", icon: LayoutDashboard },
-  { label: "Workspaces", path: "/workspaces", icon: Briefcase },
-  { label: "Instalar Script", path: "/install", icon: Code2 },
+  { label: "Visão Geral", path: "/", icon: LayoutDashboard },
+  { label: "Workspaces", path: "/workspaces", icon: Radio },
+  { label: "Instalação", path: "/install", icon: Code2 },
   { label: "Planos", path: "/plans", icon: CreditCard },
   { label: "Configurações", path: "/settings", icon: Settings },
 ];
@@ -41,9 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="p-4">
           <Link to="/" className="flex items-center">
-            <span className="aura-logo" style={{ fontSize: "24px" }}>
-              aura<span className="aura-logo-dot">.</span>
-            </span>
+            <AuraLogo size={24} fontSize={22} />
           </Link>
         </div>
 
