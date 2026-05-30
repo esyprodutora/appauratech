@@ -36,7 +36,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { Copy, Check, Trash2, Briefcase, Activity, Send, Flame } from "lucide-react";
+import { Copy, Check, Trash2, Briefcase, Activity, Send, Flame, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { MetricCard } from "@/components/metric-card";
 import { ScoreBadge } from "@/components/score-badge";
@@ -68,6 +68,13 @@ const PLATFORMS: Array<{
   { id: "kwai", name: "Kwai for Business", badgeKey: "kwai", pixelLabel: "Pixel ID", tokenLabel: "Access Token" },
 ];
 
+const TEMPLATES = [
+  { value: "vsl", label: "VSL / Infoproduto" },
+  { value: "ecommerce", label: "E-commerce" },
+  { value: "lead_quiz", label: "Captura de Leads / Quiz" },
+  { value: "local_x1", label: "Negócio Local / WhatsApp" },
+];
+
 interface CapiCred {
   pixel_id: string;
   vault_secret_id: string;
@@ -92,6 +99,17 @@ export default function WorkspaceDetail() {
   const [events, setEvents] = useState<any[]>([]);
   const [copiedToken, setCopiedToken] = useState(false);
   const [savingAutopilot, setSavingAutopilot] = useState(false);
+
+  // Edit state
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDomain, setEditDomain] = useState("");
+  const [editTemplate, setEditTemplate] = useState("");
+  const [editScoreCutoff, setEditScoreCutoff] = useState(60);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState("");
+
   const [creds, setCreds] = useState<Record<PlatformId, CapiCred>>({
     meta: emptyCred(),
     tiktok: emptyCred(),
@@ -105,7 +123,13 @@ export default function WorkspaceDetail() {
       setLoading(true);
       const { data, error } = await supabase.from("workspaces").select("*").eq("id", id).single();
       if (error) toast.error(error.message);
-      else setWorkspace(data as Workspace);
+      else {
+        setWorkspace(data as Workspace);
+        setEditName(data.name);
+        setEditDomain(data.domain);
+        setEditTemplate(data.template ?? "vsl");
+        setEditScoreCutoff(data.score_cutoff ?? 60);
+      }
       setLoading(false);
     })();
   }, [id]);
@@ -114,42 +138,18 @@ export default function WorkspaceDetail() {
     if (!workspace) return;
     (async () => {
       const [sessRes, evRes, credsRes] = await Promise.all([
-        supabase
-          .from("active_sessions")
-          .select("*")
-          .eq("workspace_id", workspace.id)
-          .order("last_seen_at", { ascending: false })
-          .limit(50),
-        supabase
-          .from("capi_events_log")
-          .select("*")
-          .eq("workspace_id", workspace.id)
-          .order("sent_at", { ascending: false })
-          .limit(100),
-        supabase
-          .from("capi_credentials")
-          .select("platform, pixel_id, vault_secret_id, is_active")
-          .eq("workspace_id", workspace.id),
+        supabase.from("active_sessions").select("*").eq("workspace_id", workspace.id).order("last_seen_at", { ascending: false }).limit(50),
+        supabase.from("capi_events_log").select("*").eq("workspace_id", workspace.id).order("sent_at", { ascending: false }).limit(100),
+        supabase.from("capi_credentials").select("platform, pixel_id, vault_secret_id, is_active").eq("workspace_id", workspace.id),
       ]);
       setSessions(sessRes.data ?? []);
       setEvents(evRes.data ?? []);
-
       if (credsRes.data) {
         setCreds((prev) => {
           const next = { ...prev };
-          for (const row of credsRes.data as Array<{
-            platform: PlatformId;
-            pixel_id: string;
-            vault_secret_id: string;
-            is_active: boolean;
-          }>) {
-            if (next[row.platform]) {
-              next[row.platform] = {
-                ...next[row.platform],
-                pixel_id: row.pixel_id ?? "",
-                vault_secret_id: row.vault_secret_id ?? "",
-                is_active: !!row.is_active,
-              };
+          for (const row of credsRes.data as any[]) {
+            if (next[row.platform as PlatformId]) {
+              next[row.platform as PlatformId] = { ...next[row.platform as PlatformId], pixel_id: row.pixel_id ?? "", vault_secret_id: row.vault_secret_id ?? "", is_active: !!row.is_active };
             }
           }
           return next;
@@ -158,48 +158,18 @@ export default function WorkspaceDetail() {
     })();
   }, [workspace]);
 
-  const todayStart = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d.getTime();
-  }, []);
-
-  const sessionsToday = useMemo(
-    () => sessions.filter((s) => new Date(s.created_at ?? s.last_seen_at ?? 0).getTime() >= todayStart),
-    [sessions, todayStart]
-  );
-  const avgScore = useMemo(() => {
-    const arr = sessionsToday.map((s) => Number(s.score) || 0);
-    return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-  }, [sessionsToday]);
-  const eventsToday = useMemo(
-    () => events.filter((e) => new Date(e.sent_at ?? 0).getTime() >= todayStart),
-    [events, todayStart]
-  );
-  const hotLeads = useMemo(
-    () => sessionsToday.filter((s) => (Number(s.score) || 0) >= 85).length,
-    [sessionsToday]
-  );
+  const todayStart = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }, []);
+  const sessionsToday = useMemo(() => sessions.filter((s) => new Date(s.created_at ?? s.last_seen_at ?? 0).getTime() >= todayStart), [sessions, todayStart]);
+  const avgScore = useMemo(() => { const arr = sessionsToday.map((s) => Number(s.score) || 0); return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0; }, [sessionsToday]);
+  const eventsToday = useMemo(() => events.filter((e) => new Date(e.sent_at ?? 0).getTime() >= todayStart), [events, todayStart]);
+  const hotLeads = useMemo(() => sessionsToday.filter((s) => (Number(s.score) || 0) >= 85).length, [sessionsToday]);
 
   const chartData = useMemo(() => {
     const buckets = new Map<string, number>();
-    const cur = new Date();
-    cur.setHours(0, 0, 0, 0);
-    cur.setDate(cur.getDate() - 6);
-    for (let i = 0; i < 7; i++) {
-      const k = cur.toISOString().slice(0, 10);
-      buckets.set(k, 0);
-      cur.setDate(cur.getDate() + 1);
-    }
-    for (const s of sessions) {
-      const ts = (s.created_at ?? s.last_seen_at ?? "") as string;
-      const k = ts.slice(0, 10);
-      if (buckets.has(k)) buckets.set(k, (buckets.get(k) ?? 0) + 1);
-    }
-    return Array.from(buckets.entries()).map(([k, v]) => ({
-      date: k.slice(8, 10) + "/" + k.slice(5, 7),
-      value: v,
-    }));
+    const cur = new Date(); cur.setHours(0, 0, 0, 0); cur.setDate(cur.getDate() - 6);
+    for (let i = 0; i < 7; i++) { const k = cur.toISOString().slice(0, 10); buckets.set(k, 0); cur.setDate(cur.getDate() + 1); }
+    for (const s of sessions) { const k = (s.created_at ?? s.last_seen_at ?? "").slice(0, 10); if (buckets.has(k)) buckets.set(k, (buckets.get(k) ?? 0) + 1); }
+    return Array.from(buckets.entries()).map(([k, v]) => ({ date: k.slice(8, 10) + "/" + k.slice(5, 7), value: v }));
   }, [sessions]);
 
   const publicToken = workspace?.public_token ?? "";
@@ -212,23 +182,13 @@ export default function WorkspaceDetail() {
     setTimeout(() => setCopiedToken(false), 2000);
   };
 
-  const updateCred = (p: PlatformId, patch: Partial<CapiCred>) =>
-    setCreds((prev) => ({ ...prev, [p]: { ...prev[p], ...patch } }));
+  const updateCred = (p: PlatformId, patch: Partial<CapiCred>) => setCreds((prev) => ({ ...prev, [p]: { ...prev[p], ...patch } }));
 
   const saveCred = async (p: PlatformId) => {
     if (!workspace) return;
     const c = creds[p];
     updateCred(p, { loading: true });
-    const { error } = await supabase.from("capi_credentials").upsert(
-      {
-        workspace_id: workspace.id,
-        platform: p,
-        pixel_id: c.pixel_id,
-        vault_secret_id: c.vault_secret_id,
-        is_active: true,
-      },
-      { onConflict: "workspace_id,platform" }
-    );
+    const { error } = await supabase.from("capi_credentials").upsert({ workspace_id: workspace.id, platform: p, pixel_id: c.pixel_id, vault_secret_id: c.vault_secret_id, is_active: true }, { onConflict: "workspace_id,platform" });
     updateCred(p, { loading: false, is_active: true });
     if (error) toast.error(error.message);
     else toast.success("Salvo!");
@@ -237,44 +197,69 @@ export default function WorkspaceDetail() {
   const toggleAutopilot = async (v: boolean) => {
     if (!workspace) return;
     setSavingAutopilot(true);
-    const { error } = await supabase
-      .from("workspaces")
-      .update({ autopilot: v })
-      .eq("id", workspace.id);
+    const { error } = await supabase.from("workspaces").update({ autopilot: v }).eq("id", workspace.id);
     setSavingAutopilot(false);
     if (error) toast.error(error.message);
-    else {
-      setWorkspace({ ...workspace, autopilot: v });
-      toast.success("Atualizado");
+    else { setWorkspace({ ...workspace, autopilot: v }); toast.success("Atualizado"); }
+  };
+
+  const handleTemplateChange = (newTemplate: string) => {
+    if (newTemplate !== workspace?.template) {
+      setPendingTemplate(newTemplate);
+      setShowResetConfirm(true);
+    } else {
+      setEditTemplate(newTemplate);
     }
+  };
+
+  const confirmTemplateChange = () => {
+    setEditTemplate(pendingTemplate);
+    setShowResetConfirm(false);
+  };
+
+  const saveEdit = async () => {
+    if (!workspace) return;
+    setSavingEdit(true);
+    const templateChanged = editTemplate !== workspace.template;
+
+    const { error } = await supabase.from("workspaces").update({
+      name: editName,
+      domain: editDomain,
+      template: editTemplate,
+      score_cutoff: editScoreCutoff,
+    }).eq("id", workspace.id);
+
+    if (error) {
+      toast.error(error.message);
+      setSavingEdit(false);
+      return;
+    }
+
+    if (templateChanged) {
+      await supabase.from("active_sessions").delete().eq("workspace_id", workspace.id);
+      toast.success("Workspace atualizado e sessões resetadas!");
+    } else {
+      toast.success("Workspace atualizado!");
+    }
+
+    setWorkspace({ ...workspace, name: editName, domain: editDomain, template: editTemplate, score_cutoff: editScoreCutoff });
+    setSavingEdit(false);
+    setEditing(false);
   };
 
   const deleteWorkspace = async () => {
     if (!workspace) return;
     const { error } = await supabase.from("workspaces").delete().eq("id", workspace.id);
     if (error) toast.error(error.message);
-    else {
-      toast.success("Workspace excluído");
-      navigate("/workspaces");
-    }
+    else { toast.success("Workspace excluído"); navigate("/workspaces"); }
   };
 
   if (loading) {
-    return (
-      <Layout>
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#6366F1] border-t-transparent" />
-        </div>
-      </Layout>
-    );
+    return <Layout><div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-[#6366F1] border-t-transparent" /></div></Layout>;
   }
 
   if (!workspace) {
-    return (
-      <Layout>
-        <p className="text-[#94A3B8]">Workspace não encontrado</p>
-      </Layout>
-    );
+    return <Layout><p className="text-[#94A3B8]">Workspace não encontrado</p></Layout>;
   }
 
   return (
@@ -286,18 +271,8 @@ export default function WorkspaceDetail() {
         </div>
         <div className="flex items-center gap-2">
           <TemplateBadge template={workspace.template ?? ""} />
-          <span
-            className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium"
-            style={{
-              background: "rgba(16,185,129,0.12)",
-              color: "#10B981",
-              border: "1px solid rgba(16,185,129,0.25)",
-            }}
-          >
-            <span
-              className="pulse-dot inline-block h-1.5 w-1.5 rounded-full"
-              style={{ background: "#10B981" }}
-            />
+          <span className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium" style={{ background: "rgba(16,185,129,0.12)", color: "#10B981", border: "1px solid rgba(16,185,129,0.25)" }}>
+            <span className="pulse-dot inline-block h-1.5 w-1.5 rounded-full" style={{ background: "#10B981" }} />
             Ativo
           </span>
         </div>
@@ -318,13 +293,8 @@ export default function WorkspaceDetail() {
             <MetricCard label="EVENTOS CAPI" value={eventsToday.length.toLocaleString("pt-BR")} icon={Send} />
             <MetricCard label="LEADS QUENTES (≥85)" value={hotLeads.toLocaleString("pt-BR")} icon={Flame} accent="success" />
           </div>
-
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-[13px] font-medium text-[#94A3B8]">
-                Sessões últimos 7 dias
-              </CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-[13px] font-medium text-[#94A3B8]">Sessões últimos 7 dias</CardTitle></CardHeader>
             <CardContent>
               <div style={{ width: "100%", height: 280 }}>
                 <ResponsiveContainer>
@@ -342,15 +312,7 @@ export default function WorkspaceDetail() {
                     <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
                     <XAxis dataKey="date" stroke="transparent" tick={{ fill: "#94A3B8", fontSize: 11 }} tickMargin={10} />
                     <YAxis stroke="transparent" tick={{ fill: "#94A3B8", fontSize: 11 }} allowDecimals={false} width={36} />
-                    <Tooltip
-                      contentStyle={{
-                        background: "#141415",
-                        border: "1px solid rgba(255,255,255,0.10)",
-                        borderRadius: 8,
-                        color: "#F8FAFC",
-                        fontSize: 12,
-                      }}
-                    />
+                    <Tooltip contentStyle={{ background: "#141415", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 8, color: "#F8FAFC", fontSize: 12 }} />
                     <Area type="monotone" dataKey="value" stroke="url(#wsAuraLine)" strokeWidth={2.5} dot={false} fill="url(#wsAreaFill)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -361,9 +323,7 @@ export default function WorkspaceDetail() {
 
         <TabsContent value="sessions" className="mt-4">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-[13px] font-medium text-[#94A3B8]">Últimas sessões</CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-[13px] font-medium text-[#94A3B8]">Últimas sessões</CardTitle></CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
@@ -376,13 +336,7 @@ export default function WorkspaceDetail() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sessions.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-[#94A3B8]">
-                        Nenhuma sessão registrada.
-                      </TableCell>
-                    </TableRow>
-                  )}
+                  {sessions.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-[#94A3B8]">Nenhuma sessão registrada.</TableCell></TableRow>}
                   {sessions.map((s) => {
                     const isActive = s.last_seen_at && (Date.now() - new Date(s.last_seen_at).getTime()) < 5 * 60_000;
                     return (
@@ -390,9 +344,7 @@ export default function WorkspaceDetail() {
                         <TableCell><ScoreBadge score={Number(s.score) || 0} /></TableCell>
                         <TableCell><TemplateBadge template={s.template || workspace.template || ""} /></TableCell>
                         <TableCell><PlatformBadge platform={s.platform || s.source || ""} /></TableCell>
-                        <TableCell className="tabular-nums text-[#94A3B8]">
-                          {s.last_seen_at ? new Date(s.last_seen_at).toLocaleString("pt-BR") : "—"}
-                        </TableCell>
+                        <TableCell className="tabular-nums text-[#94A3B8]">{s.last_seen_at ? new Date(s.last_seen_at).toLocaleString("pt-BR") : "—"}</TableCell>
                         <TableCell>
                           <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: isActive ? "#10B981" : "#94A3B8" }}>
                             <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: isActive ? "#10B981" : "#94A3B8" }} />
@@ -410,9 +362,7 @@ export default function WorkspaceDetail() {
 
         <TabsContent value="capi" className="mt-4">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-[13px] font-medium text-[#94A3B8]">Eventos enviados</CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-[13px] font-medium text-[#94A3B8]">Eventos enviados</CardTitle></CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
@@ -426,13 +376,7 @@ export default function WorkspaceDetail() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {events.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-[#94A3B8]">
-                        Nenhum evento registrado.
-                      </TableCell>
-                    </TableRow>
-                  )}
+                  {events.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-[#94A3B8]">Nenhum evento registrado.</TableCell></TableRow>}
                   {events.map((e) => {
                     const ok = e.success === true;
                     return (
@@ -441,22 +385,12 @@ export default function WorkspaceDetail() {
                         <TableCell><PlatformBadge platform={e.platform ?? ""} /></TableCell>
                         <TableCell>{typeof e.score === "number" ? <ScoreBadge score={Number(e.score)} /> : <span className="text-[#94A3B8]">—</span>}</TableCell>
                         <TableCell>
-                          <span
-                            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs"
-                            style={{
-                              background: ok ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)",
-                              color: ok ? "#10B981" : "#EF4444",
-                            }}
-                          >
+                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs" style={{ background: ok ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)", color: ok ? "#10B981" : "#EF4444" }}>
                             {ok ? "✓" : "✗"}
                           </span>
                         </TableCell>
-                        <TableCell className="font-mono text-xs text-[#94A3B8]">
-                          {e.response_code ?? e.status_code ?? "—"}
-                        </TableCell>
-                        <TableCell className="tabular-nums text-[#94A3B8]">
-                          {e.sent_at ? new Date(e.sent_at).toLocaleString("pt-BR") : "—"}
-                        </TableCell>
+                        <TableCell className="font-mono text-xs text-[#94A3B8]">{e.response_code ?? e.status_code ?? "—"}</TableCell>
+                        <TableCell className="tabular-nums text-[#94A3B8]">{e.sent_at ? new Date(e.sent_at).toLocaleString("pt-BR") : "—"}</TableCell>
                       </TableRow>
                     );
                   })}
@@ -468,9 +402,7 @@ export default function WorkspaceDetail() {
 
         <TabsContent value="settings" className="mt-4 space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-white text-base">Token de instalação</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-white text-base">Token de instalação</CardTitle></CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
                 <Input readOnly value={publicToken} className="bg-[#1C1C1E] border-white/10 text-white font-mono text-sm" />
@@ -482,39 +414,119 @@ export default function WorkspaceDetail() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-white text-base">Detalhes</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditing(!editing)}
+                className="text-[#94A3B8] hover:text-white gap-2"
+              >
+                {editing ? <><X className="h-4 w-4" /> Cancelar</> : <><Pencil className="h-4 w-4" /> Editar</>}
+              </Button>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2 text-sm">
-              <div>
-                <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Nome</p>
-                <p className="mt-1 text-white">{workspace.name}</p>
-              </div>
-              <div>
-                <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Domínio</p>
-                <p className="mt-1 text-white">{workspace.domain}</p>
-              </div>
-              <div>
-                <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Template</p>
-                <div className="mt-1"><TemplateBadge template={workspace.template ?? ""} /></div>
-              </div>
-              <div>
-                <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Score de corte</p>
-                <p className="mt-1 text-white tabular-nums">{workspace.score_cutoff ?? 60}pts</p>
-              </div>
-              <div className="flex items-center justify-between md:col-span-2 rounded-md border border-white/5 bg-[#1C1C1E]/60 px-3 py-2.5">
-                <div>
-                  <p className="text-white text-sm font-medium">Autopilot</p>
-                  <p className="text-xs text-[#94A3B8]">Envia eventos automaticamente quando score ≥ corte</p>
+            <CardContent className="space-y-4">
+              {editing ? (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label className="text-[#94A3B8] text-xs uppercase tracking-wider">Nome</Label>
+                      <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="bg-[#1C1C1E] border-white/10 text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[#94A3B8] text-xs uppercase tracking-wider">Domínio</Label>
+                      <Input value={editDomain} onChange={(e) => setEditDomain(e.target.value)} className="bg-[#1C1C1E] border-white/10 text-white" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[#94A3B8] text-xs uppercase tracking-wider">Template</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {TEMPLATES.map((t) => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => handleTemplateChange(t.value)}
+                          className="rounded-lg border px-3 py-2 text-sm text-left transition-all"
+                          style={{
+                            background: editTemplate === t.value ? "rgba(99,102,241,0.15)" : "#1C1C1E",
+                            borderColor: editTemplate === t.value ? "#6366F1" : "rgba(255,255,255,0.1)",
+                            color: editTemplate === t.value ? "#6366F1" : "#94A3B8",
+                          }}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[#94A3B8] text-xs uppercase tracking-wider">Score de corte: {editScoreCutoff}pts</Label>
+                    <input
+                      type="range"
+                      min={40}
+                      max={90}
+                      value={editScoreCutoff}
+                      onChange={(e) => setEditScoreCutoff(Number(e.target.value))}
+                      className="w-full accent-[#6366F1]"
+                    />
+                  </div>
+
+                  <Button onClick={saveEdit} disabled={savingEdit} className="w-full bg-gradient-to-r from-[#6366F1] to-[#A855F7] text-white">
+                    {savingEdit ? "Salvando..." : "Salvar alterações"}
+                  </Button>
+                </>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 text-sm">
+                  <div>
+                    <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Nome</p>
+                    <p className="mt-1 text-white">{workspace.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Domínio</p>
+                    <p className="mt-1 text-white">{workspace.domain}</p>
+                  </div>
+                  <div>
+                    <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Template</p>
+                    <div className="mt-1"><TemplateBadge template={workspace.template ?? ""} /></div>
+                  </div>
+                  <div>
+                    <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Score de corte</p>
+                    <p className="mt-1 text-white tabular-nums">{workspace.score_cutoff ?? 60}pts</p>
+                  </div>
+                  <div className="flex items-center justify-between md:col-span-2 rounded-md border border-white/5 bg-[#1C1C1E]/60 px-3 py-2.5">
+                    <div>
+                      <p className="text-white text-sm font-medium">Autopilot</p>
+                      <p className="text-xs text-[#94A3B8]">Envia eventos automaticamente quando score ≥ corte</p>
+                    </div>
+                    <Switch checked={!!workspace.autopilot} disabled={savingAutopilot} onCheckedChange={toggleAutopilot} />
+                  </div>
+                  <div>
+                    <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Status</p>
+                    <p className="mt-1 text-white">Ativo</p>
+                  </div>
                 </div>
-                <Switch checked={!!workspace.autopilot} disabled={savingAutopilot} onCheckedChange={toggleAutopilot} />
-              </div>
-              <div>
-                <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Status</p>
-                <p className="mt-1 text-white">Ativo</p>
-              </div>
+              )}
             </CardContent>
           </Card>
+
+          {/* Dialog de confirmação de reset */}
+          <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Alterar template vai resetar as sessões</AlertDialogTitle>
+                <AlertDialogDescription>
+                  As sessões ativas foram calculadas com o template anterior e os dados não são comparáveis com o novo template. Ao confirmar, todas as sessões ativas serão apagadas e o tracking começará do zero com o novo template.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setShowResetConfirm(false)}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmTemplateChange} className="bg-[#6366F1] text-white">
+                  Confirmar e resetar sessões
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <div>
             <h2 className="mb-3 text-lg font-semibold text-white">Plataformas de Anúncios</h2>
@@ -533,25 +545,12 @@ export default function WorkspaceDetail() {
                     <CardContent className="space-y-3">
                       <div className="space-y-2">
                         <Label className="text-[#94A3B8] text-xs">{p.pixelLabel}</Label>
-                        <Input
-                          value={c.pixel_id}
-                          onChange={(e) => updateCred(p.id, { pixel_id: e.target.value })}
-                          className="bg-[#1C1C1E] border-white/10 text-white"
-                        />
+                        <Input value={c.pixel_id} onChange={(e) => updateCred(p.id, { pixel_id: e.target.value })} className="bg-[#1C1C1E] border-white/10 text-white" />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[#94A3B8] text-xs">{p.tokenLabel}</Label>
-                        <Input
-                          type={c.showToken ? "text" : "password"}
-                          value={c.vault_secret_id}
-                          onChange={(e) => updateCred(p.id, { vault_secret_id: e.target.value })}
-                          className="bg-[#1C1C1E] border-white/10 text-white font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => updateCred(p.id, { showToken: !c.showToken })}
-                          className="text-xs text-[#6366F1] hover:underline"
-                        >
+                        <Input type={c.showToken ? "text" : "password"} value={c.vault_secret_id} onChange={(e) => updateCred(p.id, { vault_secret_id: e.target.value })} className="bg-[#1C1C1E] border-white/10 text-white font-mono" />
+                        <button type="button" onClick={() => updateCred(p.id, { showToken: !c.showToken })} className="text-xs text-[#6366F1] hover:underline">
                           {c.showToken ? "Ocultar" : "Mostrar"}
                         </button>
                       </div>
@@ -566,32 +565,21 @@ export default function WorkspaceDetail() {
           </div>
 
           <Card style={{ borderColor: "rgba(239,68,68,0.25)" }}>
-            <CardHeader>
-              <CardTitle className="text-red-400 text-base">Zona de perigo</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-red-400 text-base">Zona de perigo</CardTitle></CardHeader>
             <CardContent>
-              <p className="text-sm text-[#94A3B8] mb-3">
-                A exclusão é permanente. Todos os dados associados serão removidos.
-              </p>
+              <p className="text-sm text-[#94A3B8] mb-3">A exclusão é permanente. Todos os dados associados serão removidos.</p>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir workspace
-                  </Button>
+                  <Button variant="destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir workspace</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Excluir "{workspace.name}"?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta ação não pode ser desfeita. Todos os dados serão permanentemente removidos.
-                    </AlertDialogDescription>
+                    <AlertDialogDescription>Esta ação não pode ser desfeita. Todos os dados serão permanentemente removidos.</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={deleteWorkspace} className="bg-red-600 hover:bg-red-700 text-white">
-                      Excluir
-                    </AlertDialogAction>
+                    <AlertDialogAction onClick={deleteWorkspace} className="bg-red-600 hover:bg-red-700 text-white">Excluir</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
