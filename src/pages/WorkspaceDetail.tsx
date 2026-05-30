@@ -9,32 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
+  AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
 import { Copy, Check, Trash2, Briefcase, Activity, Send, Flame, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
@@ -55,25 +38,38 @@ interface Workspace {
 
 type PlatformId = "meta" | "tiktok" | "google_ads" | "kwai";
 
-const PLATFORMS: Array<{
-  id: PlatformId;
-  name: string;
-  badgeKey: string;
-  pixelLabel: string;
-  tokenLabel: string;
-}> = [
+const PLATFORMS: Array<{ id: PlatformId; name: string; badgeKey: string; pixelLabel: string; tokenLabel: string }> = [
   { id: "meta", name: "Meta", badgeKey: "meta", pixelLabel: "Pixel ID", tokenLabel: "Token de Acesso" },
   { id: "tiktok", name: "TikTok", badgeKey: "tiktok", pixelLabel: "Pixel ID", tokenLabel: "Access Token" },
   { id: "google_ads", name: "Google Ads", badgeKey: "google", pixelLabel: "Tag ID", tokenLabel: "API Secret" },
   { id: "kwai", name: "Kwai for Business", badgeKey: "kwai", pixelLabel: "Pixel ID", tokenLabel: "Access Token" },
 ];
 
-const TIPOS_DE_NEGOCIO = [
-  { value: "vsl", label: "VSL / Infoproduto" },
-  { value: "ecommerce", label: "E-commerce" },
-  { value: "lead_quiz", label: "Captura de Leads / Quiz" },
-  { value: "local_x1", label: "Negócio Local / WhatsApp" },
+type TipoBase = "vsl" | "ecommerce" | "lead_quiz" | "local_x1";
+
+const TIPOS_BASE: Array<{ id: TipoBase; label: string }> = [
+  { id: "vsl", label: "VSL / Infoproduto" },
+  { id: "ecommerce", label: "E-commerce" },
+  { id: "lead_quiz", label: "Captura de Leads / Quiz" },
+  { id: "local_x1", label: "Negócio Local / WhatsApp" },
 ];
+
+const ECOMMERCE_SUBS = [
+  { id: "ecommerce_multi", label: "Loja virtual com múltiplos produtos", desc: "Várias páginas, categorias, galeria e avaliações" },
+  { id: "ecommerce_single", label: "Página de venda com produto único", desc: "Landing page de um produto só com checkout" },
+];
+
+const QUIZ_SUBS = [
+  { id: "lead_quiz_capture", label: "Apenas captura de lead", desc: "O quiz coleta o contato — sem venda no final" },
+  { id: "lead_quiz_sale", label: "Quiz com venda", desc: "O quiz leva a um checkout e compra" },
+];
+
+function getTipoBase(template: string): TipoBase {
+  if (template.startsWith("ecommerce")) return "ecommerce";
+  if (template.startsWith("lead_quiz")) return "lead_quiz";
+  if (template === "local_x1") return "local_x1";
+  return "vsl";
+}
 
 interface CapiCred {
   pixel_id: string;
@@ -82,13 +78,7 @@ interface CapiCred {
   showToken: boolean;
   loading: boolean;
 }
-const emptyCred = (): CapiCred => ({
-  pixel_id: "",
-  vault_secret_id: "",
-  is_active: false,
-  showToken: false,
-  loading: false,
-});
+const emptyCred = (): CapiCred => ({ pixel_id: "", vault_secret_id: "", is_active: false, showToken: false, loading: false });
 
 export default function WorkspaceDetail() {
   const { id } = useParams<{ id: string }>();
@@ -104,16 +94,14 @@ export default function WorkspaceDetail() {
   const [editName, setEditName] = useState("");
   const [editDomain, setEditDomain] = useState("");
   const [editTemplate, setEditTemplate] = useState("");
+  const [editTipoBase, setEditTipoBase] = useState<TipoBase>("vsl");
   const [editScoreCutoff, setEditScoreCutoff] = useState(60);
   const [savingEdit, setSavingEdit] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState("");
 
   const [creds, setCreds] = useState<Record<PlatformId, CapiCred>>({
-    meta: emptyCred(),
-    tiktok: emptyCred(),
-    google_ads: emptyCred(),
-    kwai: emptyCred(),
+    meta: emptyCred(), tiktok: emptyCred(), google_ads: emptyCred(), kwai: emptyCred(),
   });
 
   useEffect(() => {
@@ -127,6 +115,7 @@ export default function WorkspaceDetail() {
         setEditName(data.name);
         setEditDomain(data.domain);
         setEditTemplate(data.template ?? "vsl");
+        setEditTipoBase(getTipoBase(data.template ?? "vsl"));
         setEditScoreCutoff(data.score_cutoff ?? 60);
       }
       setLoading(false);
@@ -187,7 +176,10 @@ export default function WorkspaceDetail() {
     if (!workspace) return;
     const c = creds[p];
     updateCred(p, { loading: true });
-    const { error } = await supabase.from("capi_credentials").upsert({ workspace_id: workspace.id, platform: p, pixel_id: c.pixel_id, vault_secret_id: c.vault_secret_id, is_active: true }, { onConflict: "workspace_id,platform" });
+    const { error } = await supabase.from("capi_credentials").upsert(
+      { workspace_id: workspace.id, platform: p, pixel_id: c.pixel_id, vault_secret_id: c.vault_secret_id, is_active: true },
+      { onConflict: "workspace_id,platform" }
+    );
     updateCred(p, { loading: false, is_active: true });
     if (error) toast.error(error.message);
     else toast.success("Salvo!");
@@ -202,12 +194,20 @@ export default function WorkspaceDetail() {
     else { setWorkspace({ ...workspace, autopilot: v }); toast.success("Atualizado"); }
   };
 
-  const handleTipoNegocioChange = (novoTipo: string) => {
-    if (novoTipo !== workspace?.template) {
-      setPendingTemplate(novoTipo);
+  const handleTipoBaseChange = (tipo: TipoBase) => {
+    setEditTipoBase(tipo);
+    if (tipo === "vsl") setEditTemplate("vsl");
+    if (tipo === "local_x1") setEditTemplate("local_x1");
+    if (tipo === "ecommerce") setEditTemplate("ecommerce_multi");
+    if (tipo === "lead_quiz") setEditTemplate("lead_quiz_capture");
+  };
+
+  const handleSubTipoChange = (subTipo: string) => {
+    if (subTipo !== workspace?.template) {
+      setPendingTemplate(subTipo);
       setShowResetConfirm(true);
     } else {
-      setEditTemplate(novoTipo);
+      setEditTemplate(subTipo);
     }
   };
 
@@ -222,17 +222,10 @@ export default function WorkspaceDetail() {
     const tipoChanged = editTemplate !== workspace.template;
 
     const { error } = await supabase.from("workspaces").update({
-      name: editName,
-      domain: editDomain,
-      template: editTemplate,
-      score_cutoff: editScoreCutoff,
+      name: editName, domain: editDomain, template: editTemplate, score_cutoff: editScoreCutoff,
     }).eq("id", workspace.id);
 
-    if (error) {
-      toast.error(error.message);
-      setSavingEdit(false);
-      return;
-    }
+    if (error) { toast.error(error.message); setSavingEdit(false); return; }
 
     if (tipoChanged) {
       await supabase.from("capi_events_log").delete().eq("workspace_id", workspace.id);
@@ -253,10 +246,7 @@ export default function WorkspaceDetail() {
     await supabase.from("active_sessions").delete().eq("workspace_id", workspace.id);
     const { error } = await supabase.from("workspaces").delete().eq("id", workspace.id);
     if (error) toast.error(error.message);
-    else {
-      toast.success("Workspace excluído");
-      navigate("/workspaces");
-    }
+    else { toast.success("Workspace excluído"); navigate("/workspaces"); }
   };
 
   if (loading) {
@@ -439,25 +429,67 @@ export default function WorkspaceDetail() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Label className="text-[#94A3B8] text-xs uppercase tracking-wider">Tipo de negócio</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      {TIPOS_DE_NEGOCIO.map((t) => (
+                      {TIPOS_BASE.map((t) => (
                         <button
-                          key={t.value}
+                          key={t.id}
                           type="button"
-                          onClick={() => handleTipoNegocioChange(t.value)}
+                          onClick={() => handleTipoBaseChange(t.id)}
                           className="rounded-lg border px-3 py-2 text-sm text-left transition-all"
                           style={{
-                            background: editTemplate === t.value ? "rgba(99,102,241,0.15)" : "#1C1C1E",
-                            borderColor: editTemplate === t.value ? "#6366F1" : "rgba(255,255,255,0.1)",
-                            color: editTemplate === t.value ? "#6366F1" : "#94A3B8",
+                            background: editTipoBase === t.id ? "rgba(99,102,241,0.15)" : "#1C1C1E",
+                            borderColor: editTipoBase === t.id ? "#6366F1" : "rgba(255,255,255,0.1)",
+                            color: editTipoBase === t.id ? "#6366F1" : "#94A3B8",
                           }}
                         >
                           {t.label}
                         </button>
                       ))}
                     </div>
+
+                    {editTipoBase === "ecommerce" && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-[#94A3B8] uppercase tracking-wider">Como é sua loja?</p>
+                        {ECOMMERCE_SUBS.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => handleSubTipoChange(s.id)}
+                            className="w-full rounded-lg p-3 text-left transition-all"
+                            style={{
+                              background: editTemplate === s.id ? "rgba(16,185,129,0.08)" : "#1C1C1E",
+                              border: editTemplate === s.id ? "2px solid #10B981" : "1px solid rgba(255,255,255,0.1)",
+                            }}
+                          >
+                            <p className="text-sm font-semibold text-white">{s.label}</p>
+                            <p className="mt-0.5 text-xs text-[#94A3B8]">{s.desc}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {editTipoBase === "lead_quiz" && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-[#94A3B8] uppercase tracking-wider">Seu quiz leva a uma venda?</p>
+                        {QUIZ_SUBS.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => handleSubTipoChange(s.id)}
+                            className="w-full rounded-lg p-3 text-left transition-all"
+                            style={{
+                              background: editTemplate === s.id ? "rgba(245,158,11,0.08)" : "#1C1C1E",
+                              border: editTemplate === s.id ? "2px solid #F59E0B" : "1px solid rgba(255,255,255,0.1)",
+                            }}
+                          >
+                            <p className="text-sm font-semibold text-white">{s.label}</p>
+                            <p className="mt-0.5 text-xs text-[#94A3B8]">{s.desc}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
