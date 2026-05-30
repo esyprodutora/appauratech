@@ -16,7 +16,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate("/", { replace: true });
+    if (user) navigate("/dashboard", { replace: true });
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,7 +28,7 @@ export default function Login() {
       toast.error(error.message);
     } else {
       toast.success("Login realizado com sucesso!");
-      navigate("/");
+      navigate("/dashboard");
     }
   };
 
