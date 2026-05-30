@@ -484,9 +484,9 @@ function Footer() {
           <p className="mt-2 text-xs text-[#64748B]">Inteligência invisível. Resultado real.</p>
         </div>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-[#94A3B8]">
-          <a href="#" className="hover:text-white">Termos de Uso</a>
-          <a href="#" className="hover:text-white">Privacidade</a>
-          <a href="#" className="hover:text-white">Contato</a>
+          <Link to="/termos" className="hover:text-white">Termos de Uso</Link>
+          <Link to="/privacidade" className="hover:text-white">Privacidade</Link>
+          <a href="mailto:contato.esyprodutora@gmail.com" className="hover:text-white">Contato</a>
         </div>
         <p className="text-xs text-[#64748B]">© 2026 AURA. Todos os direitos reservados.</p>
       </div>
