@@ -15,7 +15,7 @@ import { Video, ShoppingCart, ClipboardList, MapPin } from "lucide-react";
 
 type TemplateId = "vsl" | "ecommerce" | "lead_quiz" | "local_x1";
 
-const TEMPLATES: Array<{ id: TemplateId; title: string; subtitle: string; icon: React.ReactNode }> = [
+const TIPOS_DE_NEGOCIO: Array<{ id: TemplateId; title: string; subtitle: string; icon: React.ReactNode }> = [
   { id: "vsl", title: "VSL / Infoproduto", subtitle: "Páginas de venda longas", icon: <Video size={20} /> },
   { id: "ecommerce", title: "E-commerce", subtitle: "Loja virtual", icon: <ShoppingCart size={20} /> },
   { id: "lead_quiz", title: "Captura de Leads / Quiz", subtitle: "Funis de leads", icon: <ClipboardList size={20} /> },
@@ -118,11 +118,11 @@ export default function CreateWorkspace() {
 
         <Card className="bg-[#141415] border-white/10">
           <CardHeader>
-            <CardTitle className="text-white">Template</CardTitle>
+            <CardTitle className="text-white">Tipo de negócio</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 md:grid-cols-2">
-              {TEMPLATES.map((t) => {
+              {TIPOS_DE_NEGOCIO.map((t) => {
                 const selected = t.id === template;
                 return (
                   <button
