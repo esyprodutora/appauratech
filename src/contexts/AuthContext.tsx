@@ -14,6 +14,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+async function ensureOrganization(user: User) {
+  const { data: existing } = await supabase
+    .from("organizations")
+    .select("id")
+    .limit(1)
+    .single();
+
+  if (!existing) {
+    const slug = user.id.slice(0, 8) + "-" + Date.now();
+    await supabase.from("organizations").insert({
+      name: user.email ?? "Minha Organização",
+      slug,
+      plan: "starter",
+      session_quota: 50000,
+      is_active: true,
+    });
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -23,12 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) ensureOrganization(session.user);
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) ensureOrganization(session.user);
     });
 
     return () => subscription.unsubscribe();
@@ -42,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo: `${window.location.origin}/dashboard` },
     });
     return { error };
   };
@@ -51,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/login` },
+      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
     });
     return { error };
   };
