@@ -11,6 +11,8 @@ import InstallScript from "./pages/InstallScript";
 import Plans from "./pages/Plans";
 import Settings from "./pages/Settings";
 import LandingPage from "./pages/LandingPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 export default function App() {
   return (
@@ -28,6 +30,8 @@ export default function App() {
         <Route path="/plano" element={<Plans />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/configuracoes" element={<Settings />} />
+        <Route path="/privacidade" element={<PrivacyPolicy />} />
+        <Route path="/termos" element={<TermsOfService />} />
       </Routes>
       <Toaster position="top-right" richColors />
     </AuthProvider>
