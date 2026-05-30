@@ -35,6 +35,12 @@ export default function Workspaces() {
     fetchWorkspaces();
   }, [user, authLoading, navigate]);
 
+  useEffect(() => {
+    const onFocus = () => fetchWorkspaces();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [user]);
+
   async function fetchWorkspaces() {
     setLoading(true);
     try {
