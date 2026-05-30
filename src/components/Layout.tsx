@@ -4,7 +4,7 @@ import { Home, Radio, Code, CreditCard, Settings, LogOut } from "lucide-react";
 import AuraLogo from "@/components/AuraLogo";
 
 const NAV = [
-  { label: "Visão Geral", path: "/", icon: Home },
+  { label: "Visão Geral", path: "/dashboard", icon: Home },
   { label: "Workspaces", path: "/workspaces", icon: Radio },
   { label: "Instalação", path: "/install", icon: Code },
   { label: "Planos", path: "/plans", icon: CreditCard },
@@ -24,7 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const isActive = (path: string) =>
-    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+    location.pathname === path || location.pathname.startsWith(path);
 
   return (
     <div style={{ minHeight: "100vh", background: "#0A0A0B" }}>
@@ -43,7 +43,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         }}
       >
         <div style={{ padding: 24 }}>
-          <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <Link to="/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <AuraLogo size={24} fontSize={22} />
           </Link>
         </div>
