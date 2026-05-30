@@ -44,12 +44,13 @@ export default function Login() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#0A0A0B] px-4 py-10">
       <div className="mb-6 flex flex-col items-center">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          <circle cx="16" cy="16" r="14" stroke="#7c3aed" strokeWidth="1.5" />
-          <circle cx="16" cy="16" r="9" stroke="#7c3aed" strokeWidth="1" opacity="0.5" />
-          <circle cx="16" cy="16" r="3" fill="#7c3aed" />
-        </svg>
-        <p className="mt-2" style={{ color: "#a0a0a0", fontSize: "13px" }}>
+       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+  <circle cx="16" cy="16" r="14" stroke="#7c3aed" strokeWidth="1.5" />
+  <circle cx="16" cy="16" r="9" stroke="#7c3aed" strokeWidth="1" opacity="0.5" />
+  <circle cx="16" cy="16" r="3" fill="#7c3aed" />
+</svg>
+<span className="mt-2 font-bold text-lg text-white">aura<span className="text-[#A855F7]">.</span></span>
+<p className="mt-1" style={{ color: "#a0a0a0", fontSize: "13px" }}>
           Inteligência invisível. Resultado real.
         </p>
       </div>
