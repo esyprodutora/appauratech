@@ -68,7 +68,7 @@ const PLATFORMS: Array<{
   { id: "kwai", name: "Kwai for Business", badgeKey: "kwai", pixelLabel: "Pixel ID", tokenLabel: "Access Token" },
 ];
 
-const TEMPLATES = [
+const TIPOS_DE_NEGOCIO = [
   { value: "vsl", label: "VSL / Infoproduto" },
   { value: "ecommerce", label: "E-commerce" },
   { value: "lead_quiz", label: "Captura de Leads / Quiz" },
@@ -100,7 +100,6 @@ export default function WorkspaceDetail() {
   const [copiedToken, setCopiedToken] = useState(false);
   const [savingAutopilot, setSavingAutopilot] = useState(false);
 
-  // Edit state
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDomain, setEditDomain] = useState("");
@@ -203,16 +202,16 @@ export default function WorkspaceDetail() {
     else { setWorkspace({ ...workspace, autopilot: v }); toast.success("Atualizado"); }
   };
 
-  const handleTemplateChange = (newTemplate: string) => {
-    if (newTemplate !== workspace?.template) {
-      setPendingTemplate(newTemplate);
+  const handleTipoNegocioChange = (novoTipo: string) => {
+    if (novoTipo !== workspace?.template) {
+      setPendingTemplate(novoTipo);
       setShowResetConfirm(true);
     } else {
-      setEditTemplate(newTemplate);
+      setEditTemplate(novoTipo);
     }
   };
 
-  const confirmTemplateChange = () => {
+  const confirmTipoNegocioChange = () => {
     setEditTemplate(pendingTemplate);
     setShowResetConfirm(false);
   };
@@ -220,7 +219,7 @@ export default function WorkspaceDetail() {
   const saveEdit = async () => {
     if (!workspace) return;
     setSavingEdit(true);
-    const templateChanged = editTemplate !== workspace.template;
+    const tipoChanged = editTemplate !== workspace.template;
 
     const { error } = await supabase.from("workspaces").update({
       name: editName,
@@ -235,9 +234,10 @@ export default function WorkspaceDetail() {
       return;
     }
 
-    if (templateChanged) {
+    if (tipoChanged) {
+      await supabase.from("capi_events_log").delete().eq("workspace_id", workspace.id);
       await supabase.from("active_sessions").delete().eq("workspace_id", workspace.id);
-      toast.success("Workspace atualizado e sessões resetadas!");
+      toast.success("Workspace atualizado e dados resetados!");
     } else {
       toast.success("Workspace atualizado!");
     }
@@ -334,7 +334,7 @@ export default function WorkspaceDetail() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Score</TableHead>
-                    <TableHead>Template</TableHead>
+                    <TableHead>Tipo de negócio</TableHead>
                     <TableHead>Plataforma</TableHead>
                     <TableHead>Horário</TableHead>
                     <TableHead>Status</TableHead>
@@ -421,12 +421,7 @@ export default function WorkspaceDetail() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-white text-base">Detalhes</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditing(!editing)}
-                className="text-[#94A3B8] hover:text-white gap-2"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setEditing(!editing)} className="text-[#94A3B8] hover:text-white gap-2">
                 {editing ? <><X className="h-4 w-4" /> Cancelar</> : <><Pencil className="h-4 w-4" /> Editar</>}
               </Button>
             </CardHeader>
@@ -445,13 +440,13 @@ export default function WorkspaceDetail() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[#94A3B8] text-xs uppercase tracking-wider">Template</Label>
+                    <Label className="text-[#94A3B8] text-xs uppercase tracking-wider">Tipo de negócio</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      {TEMPLATES.map((t) => (
+                      {TIPOS_DE_NEGOCIO.map((t) => (
                         <button
                           key={t.value}
                           type="button"
-                          onClick={() => handleTemplateChange(t.value)}
+                          onClick={() => handleTipoNegocioChange(t.value)}
                           className="rounded-lg border px-3 py-2 text-sm text-left transition-all"
                           style={{
                             background: editTemplate === t.value ? "rgba(99,102,241,0.15)" : "#1C1C1E",
@@ -467,14 +462,7 @@ export default function WorkspaceDetail() {
 
                   <div className="space-y-2">
                     <Label className="text-[#94A3B8] text-xs uppercase tracking-wider">Score de corte: {editScoreCutoff}pts</Label>
-                    <input
-                      type="range"
-                      min={40}
-                      max={90}
-                      value={editScoreCutoff}
-                      onChange={(e) => setEditScoreCutoff(Number(e.target.value))}
-                      className="w-full accent-[#6366F1]"
-                    />
+                    <input type="range" min={40} max={90} value={editScoreCutoff} onChange={(e) => setEditScoreCutoff(Number(e.target.value))} className="w-full accent-[#6366F1]" />
                   </div>
 
                   <Button onClick={saveEdit} disabled={savingEdit} className="w-full bg-gradient-to-r from-[#6366F1] to-[#A855F7] text-white">
@@ -492,7 +480,7 @@ export default function WorkspaceDetail() {
                     <p className="mt-1 text-white">{workspace.domain}</p>
                   </div>
                   <div>
-                    <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Template</p>
+                    <p className="text-[#94A3B8] text-xs uppercase tracking-wider">Tipo de negócio</p>
                     <div className="mt-1"><TemplateBadge template={workspace.template ?? ""} /></div>
                   </div>
                   <div>
@@ -515,19 +503,18 @@ export default function WorkspaceDetail() {
             </CardContent>
           </Card>
 
-          {/* Dialog de confirmação de reset */}
           <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Alterar template vai resetar as sessões</AlertDialogTitle>
+                <AlertDialogTitle>Alterar o tipo de negócio vai resetar os dados</AlertDialogTitle>
                 <AlertDialogDescription>
-                  As sessões ativas foram calculadas com o template anterior e os dados não são comparáveis com o novo template. Ao confirmar, todas as sessões ativas serão apagadas e o tracking começará do zero com o novo template.
+                  As sessões ativas foram calculadas com o tipo de negócio anterior e os dados não são comparáveis com o novo. Ao confirmar, todas as sessões e eventos serão apagados e o tracking começará do zero.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setShowResetConfirm(false)}>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={confirmTemplateChange} className="bg-[#6366F1] text-white">
-                  Confirmar e resetar sessões
+                <AlertDialogAction onClick={confirmTipoNegocioChange} className="bg-[#6366F1] text-white">
+                  Confirmar e resetar dados
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
