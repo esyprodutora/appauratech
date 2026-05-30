@@ -42,14 +42,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           zIndex: 30,
         }}
       >
-        <div style={{ padding: 24 }}>
-          <Link to="/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+        {/* Logo */}
+        <div style={{ padding: "24px 20px 16px" }}>
+          <Link to="/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
             <AuraLogo size={24} fontSize={22} />
           </Link>
         </div>
 
-        <nav style={{ flex: 1, padding: "8px 12px", overflowY: "auto" }}>
-          <ul style={{ display: "flex", flexDirection: "column", gap: 2, listStyle: "none", margin: 0, padding: 0 }}>
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: "4px 10px", overflowY: "auto" }}>
+          <ul style={{ display: "flex", flexDirection: "column", gap: 1, listStyle: "none", margin: 0, padding: 0 }}>
             {NAV.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
@@ -61,30 +63,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       display: "flex",
                       alignItems: "center",
                       gap: 10,
-                      padding: "10px 16px",
+                      padding: "9px 14px",
                       borderRadius: 8,
                       fontSize: 13.5,
                       fontWeight: 500,
-                      color: active ? "#FFFFFF" : "#94A3B8",
-                      background: active ? "#1a1040" : "transparent",
-                      borderLeft: active ? "3px solid #6366F1" : "3px solid transparent",
+                      color: active ? "#FFFFFF" : "#64748B",
+                      background: active ? "rgba(99,102,241,0.12)" : "transparent",
+                      borderLeft: active ? "2px solid #6366F1" : "2px solid transparent",
                       textDecoration: "none",
-                      transition: "background 150ms ease, color 150ms ease",
+                      transition: "all 150ms ease",
                     }}
                     onMouseEnter={(e) => {
                       if (!active) {
                         (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-                        (e.currentTarget as HTMLElement).style.color = "#F8FAFC";
+                        (e.currentTarget as HTMLElement).style.color = "#CBD5E1";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!active) {
                         (e.currentTarget as HTMLElement).style.background = "transparent";
-                        (e.currentTarget as HTMLElement).style.color = "#94A3B8";
+                        (e.currentTarget as HTMLElement).style.color = "#64748B";
                       }
                     }}
                   >
-                    <Icon size={16} strokeWidth={2} />
+                    <Icon size={15} strokeWidth={active ? 2.5 : 1.8} />
                     <span>{item.label}</span>
                   </Link>
                 </li>
@@ -93,21 +95,33 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </ul>
         </nav>
 
-        <div style={{ padding: 12, borderTop: SIDEBAR_BORDER }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px" }}>
+        {/* Footer */}
+        <div style={{ padding: "10px 10px 14px", borderTop: SIDEBAR_BORDER }}>
+          {/* User info */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 10px",
+              borderRadius: 8,
+              marginBottom: 4,
+            }}
+          >
             <div
               style={{
-                width: 32,
-                height: 32,
+                width: 30,
+                height: 30,
                 borderRadius: "50%",
                 background: "linear-gradient(135deg, #6366F1, #A855F7)",
                 color: "#fff",
                 fontSize: 12,
-                fontWeight: 600,
+                fontWeight: 700,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
+                boxShadow: "0 0 0 2px rgba(99,102,241,0.25)",
               }}
             >
               {user?.email?.charAt(0).toUpperCase() ?? "U"}
@@ -115,8 +129,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <p
               style={{
                 margin: 0,
-                fontSize: 12.5,
-                color: "#F8FAFC",
+                fontSize: 12,
+                color: "#94A3B8",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -127,6 +141,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {user?.email}
             </p>
           </div>
+
+          {/* Botão Sair */}
           <button
             type="button"
             onClick={handleLogout}
@@ -134,28 +150,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               width: "100%",
               display: "flex",
               alignItems: "center",
-              gap: 10,
+              justifyContent: "center",
+              gap: 8,
               padding: "8px 12px",
-              marginTop: 4,
-              borderRadius: 6,
+              borderRadius: 8,
               fontSize: 13,
               fontWeight: 500,
-              color: "#94A3B8",
+              color: "#64748B",
               background: "transparent",
-              border: "none",
+              border: "1px solid rgba(255,255,255,0.06)",
               cursor: "pointer",
-              transition: "background 150ms ease, color 150ms ease",
+              transition: "all 150ms ease",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)";
-              (e.currentTarget as HTMLElement).style.color = "#F8FAFC";
+              (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.08)";
+              (e.currentTarget as HTMLElement).style.color = "#EF4444";
+              (e.currentTarget as HTMLElement).style.borderColor = "rgba(239,68,68,0.2)";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.background = "transparent";
-              (e.currentTarget as HTMLElement).style.color = "#94A3B8";
+              (e.currentTarget as HTMLElement).style.color = "#64748B";
+              (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.06)";
             }}
           >
-            <LogOut size={15} />
+            <LogOut size={14} strokeWidth={2} />
             Sair
           </button>
         </div>
