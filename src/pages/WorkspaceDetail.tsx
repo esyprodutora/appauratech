@@ -249,9 +249,14 @@ export default function WorkspaceDetail() {
 
   const deleteWorkspace = async () => {
     if (!workspace) return;
+    await supabase.from("capi_events_log").delete().eq("workspace_id", workspace.id);
+    await supabase.from("active_sessions").delete().eq("workspace_id", workspace.id);
     const { error } = await supabase.from("workspaces").delete().eq("id", workspace.id);
     if (error) toast.error(error.message);
-    else { toast.success("Workspace excluído"); navigate("/workspaces"); }
+    else {
+      toast.success("Workspace excluído");
+      navigate("/workspaces");
+    }
   };
 
   if (loading) {
